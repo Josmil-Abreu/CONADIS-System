@@ -1,5 +1,8 @@
 <Solution>
-  <Folder Name="/Core/" />
+  <Folder Name="/Core/">
+    <Project Path="CONADIS.Application/CONADIS.Application.csproj" Id="81cae02d-358b-4f42-9d78-69812f767c43" />
+    <Project Path="CONADIS.Domain/CONADIS.Domain.csproj" Id="a8796305-3e2f-4f42-a63b-822bb94b813a" />
+  </Folder>
   <Folder Name="/Infraestructura/" />
   <Folder Name="/Presentacion/" />
   <Folder Name="/Solution Items/">
