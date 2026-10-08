@@ -1,0 +1,132 @@
+﻿@model DetalleTramiteVM
+@{
+    var e = Model.Expediente;
+    ViewData["Title"] = "Trámite " + e.NumeroExpediente;
+    var etapa = e.Estado switch
+    {
+        "Solicitado" => 1,
+        "EnEvaluacion" or "EnApelacion" => 2,
+        "Aprobado" or "Rechazado" => 3,
+        "Carnetizado" or "Vencido" => 4,
+        _ => 1
+    };
+    string Clase(int paso) => paso < etapa ? "hecho" : paso == etapa ? "actual" : "";
+}
+
+<nav aria-label="Ruta de navegación">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Inicio</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index">Mis trámites</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@e.NumeroExpediente</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h1 class="h2 mb-1">Certificación y carnet PCD</h1>
+        <p class="text-muted mb-0">Trámite @e.NumeroExpediente · Enviado el @e.FechaSolicitud.ToLocalTime().ToString("dd/MM/yyyy")</p>
+    </div>
+    <div class="text-end">
+        <p class="small text-muted mb-1">Estado actual</p>
+        <span id="estadoActual" class="badge fs-6 @VistaHelpers.EstadoClase(e.Estado)">@VistaHelpers.EstadoTexto(e.Estado)</span>
+    </div>
+</div>
+
+<p id="avisoEstado" class="small text-muted" aria-live="polite">Esta página se actualiza sola cuando cambia el estado. Te lo anunciaremos aquí.</p>
+
+<div class="row g-4">
+    <section class="col-lg-7" aria-labelledby="tituloHistorial">
+        <div class="tarjeta">
+            <h2 id="tituloHistorial" class="h5 mb-3">Historial del trámite</h2>
+            <ol class="linea-tiempo">
+                <li class="@Clase(1)">
+                    <strong>Solicitud recibida</strong> · @e.FechaSolicitud.ToLocalTime().ToString("dd/MM/yyyy HH:mm")<br />
+                    <span class="small text-muted">Unidad: Registro. Identidad validada con la JCE.</span>
+                </li>
+                <li class="@Clase(2)">
+                    <strong>En evaluación</strong> @if (etapa == 2) { <span class="small">(estás aquí)</span> }<br />
+                    <span class="small text-muted">Valoración por el equipo de medicina, psicología y trabajo social.</span>
+                </li>
+                <li class="@Clase(3)">
+                    <strong>Dictamen del comité</strong><br />
+                    <span class="small text-muted">
+                        @if (e.Estado == "Rechazado") { <text>No aprobado.</text> }
+                        else if (etapa >= 3) { <text>Aprobado · @e.TipoDiscapacidad, grado @e.GradoDiscapacidad.</text> }
+                        else { <text>Aprobado o no aprobado, con explicación.</text> }
+                    </span>
+                </li>
+                <li class="@Clase(4)">
+                    <strong>Carnet emitido</strong><br />
+                    <span class="small text-muted">
+                        @if (Model.TieneCarnet) { <a asp-controller="Carnet" asp-action="Index">Ver mi carnet N.º @e.NumeroCarnet</a> }
+                        else { <text>Podrás descargar tu carnet digital.</text> }
+                    </span>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <aside class="col-lg-5">
+        <div class="tarjeta mb-3">
+            <h2 class="h5">Próximo paso</h2>
+            @if (etapa <= 2)
+            {
+                <p>Asiste a tu cita con tu cédula y el certificado médico original.</p>
+                <a asp-action="CambiarCita" asp-route-id="@e.NumeroExpediente">Cambiar la fecha de la cita</a>
+            }
+            else if (Model.TieneCarnet)
+            {
+                <p class="mb-0">Tu carnet está listo. <a asp-controller="Carnet" asp-action="Index">Descárgalo aquí</a>.</p>
+            }
+            else
+            {
+                <p class="mb-0">Te avisaremos cuando haya novedades.</p>
+            }
+        </div>
+
+        <div class="tarjeta mb-3">
+            <h2 class="h5">Documentos</h2>
+            <ul>
+                <li><a asp-action="DescargarAcuse" asp-route-id="@e.NumeroExpediente">Acuse de recibo (PDF)</a></li>
+            </ul>
+            <form asp-action="AgregarDocumento" asp-route-id="@e.NumeroExpediente" method="post" enctype="multipart/form-data">
+                <label for="archivo" class="form-label">Agregar otro documento</label>
+                <div class="input-group">
+                    <input id="archivo" name="archivo" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" />
+                    <button type="submit" class="btn btn-outline-primary">Subir</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="tarjeta">
+            <h2 class="h5">Si no estás de acuerdo</h2>
+            @if (Model.PuedeApelar)
+            {
+                <p>Tienes 30 días para apelar el dictamen.</p>
+                <a class="btn btn-outline-danger" asp-action="Apelar" asp-route-id="@e.NumeroExpediente">Apelar el dictamen</a>
+            }
+            else
+            {
+                <p class="mb-0">Si el comité no aprueba tu solicitud, tendrás 30 días para apelar desde esta página.</p>
+            }
+        </div>
+    </aside>
+</div>
+
+@section Scripts {
+    <script>
+        // Actualización automática del estado cada 30 segundos
+        const estadoInicial = '@e.Estado';
+        setInterval(async () => {
+            try {
+                const r = await fetch('@Url.Action("Estado", new { id = e.NumeroExpediente })');
+                if (!r.ok) return;
+                const j = await r.json();
+                if (j.estado !== estadoInicial) {
+                    document.getElementById('avisoEstado').innerHTML =
+                        '<strong>El estado de tu trámite cambió.</strong> <a href="">Recarga la página para ver los detalles.</a>';
+                }
+            } catch { }
+        }, 30000);
+    </script>
+}

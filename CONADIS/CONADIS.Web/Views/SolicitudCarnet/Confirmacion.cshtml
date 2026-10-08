@@ -1,0 +1,43 @@
+﻿@model ConfirmacionVM
+@{
+    ViewData["Title"] = "Recibimos tu solicitud";
+}
+
+<section class="tarjeta text-center mb-4" aria-labelledby="titulo">
+    <h1 id="titulo" class="h2">Recibimos tu solicitud</h1>
+    <p class="mb-1">Tu número de trámite es</p>
+    <p class="display-6 fw-bold">@Model.NumeroTramite</p>
+    <p>Guárdalo: lo necesitas para consultar tu trámite sin iniciar sesión. También te lo enviamos por SMS y correo electrónico.</p>
+    <div class="d-flex justify-content-center flex-wrap gap-2 no-imprimir">
+        <a class="btn btn-outline-primary" asp-controller="Tramites" asp-action="DescargarAcuse" asp-route-id="@Model.NumeroTramite">Descargar acuse (PDF accesible)</a>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">Imprimir</button>
+    </div>
+</section>
+
+<div class="row g-3">
+    <section class="col-md-6" aria-labelledby="tituloCita">
+        <div class="tarjeta h-100">
+            <h2 id="tituloCita" class="h5">Tu cita de valoración</h2>
+            <dl class="row mb-3">
+                <dt class="col-sm-4">Fecha y hora</dt><dd class="col-sm-8">@(Model.FechaCita?.ToString("dddd dd/MM/yyyy, h:mm tt") ?? "Te la confirmaremos")</dd>
+                <dt class="col-sm-4">Lugar</dt><dd class="col-sm-8">@(Model.CentroValoracion ?? "—")</dd>
+            </dl>
+            <a class="no-imprimir" asp-controller="Tramites" asp-action="CambiarCita" asp-route-id="@Model.NumeroTramite">Cambiar fecha</a>
+        </div>
+    </section>
+    <section class="col-md-6" aria-labelledby="tituloSigue">
+        <div class="tarjeta h-100">
+            <h2 id="tituloSigue" class="h5">¿Qué sigue?</h2>
+            <ol>
+                <li>Asiste a tu cita con tu cédula y el certificado médico original.</li>
+                <li>El equipo de valoración te evaluará; la cita dura entre 60 y 90 minutos.</li>
+                <li>Te avisaremos cuando el comité emita su dictamen.</li>
+            </ol>
+        </div>
+    </section>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mt-4 no-imprimir">
+    <a class="btn btn-primary" asp-controller="Tramites" asp-action="Detalle" asp-route-id="@Model.NumeroTramite">Ver el estado de mi trámite</a>
+    <a class="btn btn-outline-primary" asp-controller="Tramites" asp-action="Index">Ir a Mis trámites</a>
+</div>

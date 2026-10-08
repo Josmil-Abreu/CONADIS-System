@@ -1,0 +1,78 @@
+﻿@model CrearCuentaVM
+@{
+    ViewData["Title"] = "Crear cuenta";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <h1 class="h2">Crear cuenta</h1>
+        <form asp-action="Registro" method="post" class="tarjeta">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <fieldset class="mb-3">
+                <legend class="h6">Quiero registrarme como</legend>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" asp-for="TipoCuenta" value="@TipoCuenta.Titular" id="tc1" />
+                    <label class="form-check-label" for="tc1">Persona con discapacidad (titular)</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" asp-for="TipoCuenta" value="@TipoCuenta.Tutor" id="tc2" />
+                    <label class="form-check-label" for="tc2">Tutor o representante legal</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" asp-for="TipoCuenta" value="@TipoCuenta.Empresa" id="tc3" />
+                    <label class="form-check-label" for="tc3">Empresa o institución (RNC)</label>
+                </div>
+            </fieldset>
+
+            <div class="mb-3" id="grupoCedula">
+                <label asp-for="Cedula" class="form-label">Cédula</label>
+                <input asp-for="Cedula" class="form-control" inputmode="numeric" />
+                <div class="form-text">11 dígitos, con o sin guiones.</div>
+                <span asp-validation-for="Cedula" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3" id="grupoRnc" hidden>
+                <label asp-for="Rnc" class="form-label">RNC</label>
+                <input asp-for="Rnc" class="form-control" inputmode="numeric" />
+                <span asp-validation-for="Rnc" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label">Correo electrónico</label>
+                <input asp-for="Email" class="form-control" autocomplete="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Contrasena" class="form-label">Contraseña</label>
+                    <input asp-for="Contrasena" class="form-control" autocomplete="new-password" />
+                    <div class="form-text">Mínimo 8 caracteres.</div>
+                    <span asp-validation-for="Contrasena" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="ConfirmarContrasena" class="form-label">Confirmar contraseña</label>
+                    <input asp-for="ConfirmarContrasena" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmarContrasena" class="text-danger"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Crear cuenta</button>
+            <a asp-action="IniciarSesion" class="ms-2">Ya tengo cuenta</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function actualizarTipo() {
+            const tipo = document.querySelector('input[name="TipoCuenta"]:checked')?.value;
+            document.getElementById('grupoCedula').hidden = tipo === 'Empresa';
+            document.getElementById('grupoRnc').hidden = tipo !== 'Empresa';
+        }
+        document.querySelectorAll('input[name="TipoCuenta"]').forEach(r => r.addEventListener('change', actualizarTipo));
+        actualizarTipo();
+    </script>
+}

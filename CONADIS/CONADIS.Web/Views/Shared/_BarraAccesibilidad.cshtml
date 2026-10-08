@@ -1,0 +1,33 @@
+﻿<a href="#contenido" class="saltar-contenido">Saltar al contenido principal</a>
+
+<div class="barra-gob py-1">
+    <div class="container">Portal oficial del Consejo Nacional de Discapacidad · República Dominicana</div>
+</div>
+
+<div class="barra-accesibilidad py-1" role="region" aria-label="Opciones de accesibilidad">
+    <div class="container d-flex flex-wrap align-items-center gap-2">
+        <span class="fw-semibold">Accesibilidad:</span>
+        <span>Tamaño de texto</span>
+        <div class="btn-group btn-group-sm" role="group" aria-label="Tamaño de texto">
+            <button type="button" class="btn btn-light" data-tamano="" aria-pressed="true">A<span class="visually-hidden"> normal</span></button>
+            <button type="button" class="btn btn-light" data-tamano="texto-grande" aria-pressed="false">A+<span class="visually-hidden"> grande</span></button>
+            <button type="button" class="btn btn-light" data-tamano="texto-muy-grande" aria-pressed="false">A++<span class="visually-hidden"> muy grande</span></button>
+        </div>
+        <button type="button" id="btn-contraste" class="btn btn-light btn-sm" aria-pressed="false">Alto contraste</button>
+        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalSenas">Lengua de señas</button>
+    </div>
+</div>
+
+<div class="modal fade" id="modalSenas" tabindex="-1" aria-labelledby="tituloSenas" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="tituloSenas">Interpretación en Lengua de Señas</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="video-placeholder">[Video en Lengua de Señas Dominicana de esta página]</div>
+            </div>
+        </div>
+    </div>
+</div>

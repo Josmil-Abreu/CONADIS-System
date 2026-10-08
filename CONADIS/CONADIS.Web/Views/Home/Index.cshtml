@@ -1,0 +1,109 @@
+﻿@{
+    ViewData["Title"] = "Inicio";
+}
+
+<section class="hero tarjeta mb-4">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <h1 class="display-6 fw-bold">Tu certificación de discapacidad y tu carnet, en línea</h1>
+            <p class="lead">
+                Solicita tu carnet, sigue el estado de tu trámite y descarga tu carnet digital sin salir de casa.
+                Si lo prefieres, también puedes hacerlo de forma presencial.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-primary btn-lg" asp-controller="SolicitudCarnet" asp-action="Index">Solicitar mi carnet</a>
+                <a class="btn btn-outline-primary btn-lg" asp-controller="Tramites" asp-action="Consultar">Consultar un trámite</a>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="video-placeholder">[Video de bienvenida con subtítulos e interpretación en Lengua de Señas]</div>
+        </div>
+    </div>
+</section>
+
+<section class="mb-5" aria-labelledby="tituloNecesitas">
+    <h2 id="tituloNecesitas" class="h3 mb-3">¿Qué necesitas hacer?</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+        <div class="col">
+            <a class="tarjeta" asp-controller="SolicitudCarnet" asp-action="Index">
+                <h3 class="h5">Solicitar carnet PCD</h3><p class="mb-0 text-muted">Primera vez, renovación o duplicado.</p>
+            </a>
+        </div>
+        <div class="col">
+            <a class="tarjeta" asp-controller="Tramites" asp-action="Consultar">
+                <h3 class="h5">Consultar mi trámite</h3><p class="mb-0 text-muted">Con tu número de trámite y tu cédula, sin crear cuenta.</p>
+            </a>
+        </div>
+        <div class="col">
+            <a class="tarjeta" asp-controller="AyudasTecnicas" asp-action="Index">
+                <h3 class="h5">Solicitar ayuda técnica</h3><p class="mb-0 text-muted">Sillas de ruedas, audífonos, bastones y otros productos de apoyo.</p>
+            </a>
+        </div>
+        <div class="col">
+            <a class="tarjeta" asp-area="Empresas" asp-controller="Certificaciones" asp-action="Solicitar">
+                <h3 class="h5">Certificación de accesibilidad</h3><p class="mb-0 text-muted">Para empresas, obras y establecimientos.</p>
+            </a>
+        </div>
+        <div class="col">
+            <a class="tarjeta" asp-controller="Verificacion" asp-action="Index">
+                <h3 class="h5">Verificar un carnet</h3><p class="mb-0 text-muted">Comprueba si un carnet o certificado es auténtico y está vigente.</p>
+            </a>
+        </div>
+        <div class="col">
+            <a class="tarjeta" asp-controller="Carnet" asp-action="Index">
+                <h3 class="h5">Descargar mi carnet digital</h3><p class="mb-0 text-muted">Disponible cuando tu trámite esté carnetizado.</p>
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="mb-5" aria-labelledby="tituloComo">
+    <h2 id="tituloComo" class="h3 mb-3">¿Cómo funciona?</h2>
+    <ol class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-3 list-unstyled">
+        <li class="col">
+            <div class="tarjeta h-100">
+                <span class="numero-paso mb-2">1</span>
+                <h3 class="h6">Envía tu solicitud</h3><p class="mb-0 small">Validamos tu identidad con la JCE y tu diagnóstico con Salud Pública.</p>
+            </div>
+        </li>
+        <li class="col">
+            <div class="tarjeta h-100">
+                <span class="numero-paso mb-2">2</span>
+                <h3 class="h6">Asiste a tu valoración</h3><p class="mb-0 small">Un equipo de medicina, psicología y trabajo social te evalúa.</p>
+            </div>
+        </li>
+        <li class="col">
+            <div class="tarjeta h-100">
+                <span class="numero-paso mb-2">3</span>
+                <h3 class="h6">Recibe el dictamen</h3><p class="mb-0 small">El comité de certificación revisa tu valoración.</p>
+            </div>
+        </li>
+        <li class="col">
+            <div class="tarjeta h-100">
+                <span class="numero-paso mb-2">4</span>
+                <h3 class="h6">Descarga tu carnet</h3><p class="mb-0 small">Carnet digital con código QR, y carnet físico si lo solicitas.</p>
+            </div>
+        </li>
+    </ol>
+</section>
+
+<div class="row g-3">
+    <section class="col-md-6" aria-labelledby="tituloRequisitos">
+        <div class="tarjeta h-100">
+            <h2 id="tituloRequisitos" class="h4">Requisitos</h2>
+            <ul>
+                <li>Cédula de identidad (o acta de nacimiento si es menor de edad).</li>
+                <li>Certificado médico del diagnóstico de origen.</li>
+                <li>Si eres tutor: documento que acredite el vínculo.</li>
+            </ul>
+            <p class="mb-0 fw-semibold">La certificación y el primer carnet son gratuitos.</p>
+        </div>
+    </section>
+    <section class="col-md-6" aria-labelledby="tituloAyuda">
+        <div class="tarjeta h-100">
+            <h2 id="tituloAyuda" class="h4">¿Necesitas ayuda?</h2>
+            <p>Llámanos a [Teléfono de atención], escríbenos a [correo de atención] o visita un punto GOB.</p>
+            <a asp-action="PreguntasFrecuentes">Ver preguntas frecuentes</a>
+        </div>
+    </section>
+</div>

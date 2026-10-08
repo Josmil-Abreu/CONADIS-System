@@ -1,0 +1,60 @@
+﻿@model VerificacionVM
+@{
+    ViewData["Title"] = "Verificar un carnet o certificado";
+}
+
+<p class="text-muted mb-1">Verificación de documentos</p>
+<h1 class="h2">Verificar un carnet o certificado</h1>
+<p>Escanea el código QR del documento con la cámara de tu teléfono, o escribe el código de verificación impreso debajo del QR.</p>
+
+<form asp-controller="Verificacion" asp-action="Verificar" method="post" class="tarjeta mb-4">
+    <label asp-for="Codigo" class="form-label">Código de verificación</label>
+    <div class="input-group">
+        <input asp-for="Codigo" class="form-control text-uppercase" placeholder="CNDS-XXXX-XXXX" />
+        <button type="submit" class="btn btn-primary">Verificar</button>
+    </div>
+    <span asp-validation-for="Codigo" class="text-danger"></span>
+</form>
+
+<div aria-live="polite">
+    @switch (Model.Resultado)
+    {
+        case ResultadoVerificacion.Vigente:
+        case ResultadoVerificacion.Vencido:
+            var vigente = Model.Resultado == ResultadoVerificacion.Vigente;
+            <section class="tarjeta resultado @(vigente ? "vigente" : "vencido")">
+                <h2 class="h4">
+                    @if (vigente) { <text>Documento auténtico y <span class="badge bg-success">VIGENTE</span></text> }
+                    else { <text>Documento auténtico pero <span class="badge bg-warning text-dark">VENCIDO</span></text> }
+                </h2>
+                @if (!vigente)
+                {
+                    <p>Su vigencia terminó. El titular debe renovarlo.</p>
+                }
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Tipo de documento</dt><dd class="col-sm-8">@Model.TipoDocumento</dd>
+                    <dt class="col-sm-4">Titular</dt><dd class="col-sm-8">@Model.TitularParcial <span class="text-muted">(nombre parcialmente oculto)</span></dd>
+                    <dt class="col-sm-4">Fecha de emisión</dt><dd class="col-sm-8">@Model.FechaEmision?.ToString("dd/MM/yyyy")</dd>
+                    <dt class="col-sm-4">Válido hasta</dt><dd class="col-sm-8">@(Model.ValidoHasta?.ToString("dd/MM/yyyy") ?? "Permanente")</dd>
+                    <dt class="col-sm-4">Firma digital</dt><dd class="col-sm-8">@(Model.FirmaValida ? "Válida · emitida por CONADIS" : "No válida")</dd>
+                </dl>
+            </section>
+            break;
+
+        case ResultadoVerificacion.Anulado:
+            <section class="tarjeta resultado anulado">
+                <h2 class="h4"><span class="badge bg-danger">ANULADO</span></h2>
+                <p class="mb-0">Este documento fue anulado y ya no es válido.</p>
+            </section>
+            break;
+
+        case ResultadoVerificacion.NoEncontrado:
+            <section class="tarjeta resultado no-encontrado">
+                <h2 class="h4"><span class="badge bg-secondary">NO ENCONTRADO</span></h2>
+                <p class="mb-0">El código no corresponde a ningún documento. Revísalo e inténtalo de nuevo.</p>
+            </section>
+            break;
+    }
+</div>
+
+<p class="small text-muted mt-3">Por privacidad, esta página no muestra diagnósticos, tipo ni grado de discapacidad, ni la cédula del titular.</p>

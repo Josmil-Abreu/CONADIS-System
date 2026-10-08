@@ -1,0 +1,37 @@
+﻿@model SolicitarDuplicadoVM
+@{
+    ViewData["Title"] = "Solicitar duplicado";
+}
+
+<nav aria-label="Ruta de navegación">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Mi carnet</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Duplicado</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <h1 class="h2">Solicitar duplicado</h1>
+        <form asp-action="SolicitarDuplicado" method="post" class="tarjeta">
+            <fieldset class="mb-3">
+                <legend class="h6">¿Por qué necesitas un duplicado?</legend>
+                @foreach (var motivo in new[] { "Pérdida", "Robo", "Deterioro" })
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" asp-for="Motivo" value="@motivo" id="m-@motivo" />
+                        <label class="form-check-label" for="m-@motivo">@motivo</label>
+                    </div>
+                }
+                <span asp-validation-for="Motivo" class="text-danger"></span>
+            </fieldset>
+            <div class="alert alert-info">El duplicado tiene un costo administrativo. En el siguiente paso podrás pagarlo.</div>
+            <button type="submit" class="btn btn-primary">Continuar al pago</button>
+            <a asp-action="Index" class="ms-2">Cancelar</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

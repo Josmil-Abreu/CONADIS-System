@@ -1,0 +1,81 @@
+﻿@model ContactoVM
+@{
+    ViewData["Title"] = "Solicitud: contacto";
+    var provincias = new[] { "Distrito Nacional", "Santo Domingo", "Santiago", "La Vega", "San Cristóbal", "Puerto Plata",
+                             "Duarte", "La Romana", "San Pedro de Macorís", "La Altagracia", "Espaillat", "Peravia", "Azua", "Barahona" };
+}
+
+<h1 class="h2">Solicitud de certificación y carnet</h1>
+<partial name="_PasosSolicitud" model="2" />
+
+<form asp-action="Contacto" method="post" class="tarjeta">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+    <h2 class="h5">¿Cómo te contactamos?</h2>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Telefono" class="form-label">Teléfono</label>
+            <input asp-for="Telefono" class="form-control" type="tel" autocomplete="tel" placeholder="809-000-0000" />
+            <span asp-validation-for="Telefono" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="Email" class="form-label">Correo electrónico</label>
+            <input asp-for="Email" class="form-control" autocomplete="email" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+    </div>
+
+    <h2 class="h5 mt-2">Dirección</h2>
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="Provincia" class="form-label">Provincia</label>
+            <select asp-for="Provincia" class="form-select">
+                <option value="">Elige la provincia</option>
+                @foreach (var p in provincias)
+                {
+                    <option value="@p">@p</option>
+                }
+            </select>
+            <span asp-validation-for="Provincia" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="Municipio" class="form-label">Municipio</label>
+            <input asp-for="Municipio" class="form-control" />
+            <span asp-validation-for="Municipio" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="Sector" class="form-label">Sector</label>
+            <input asp-for="Sector" class="form-control" />
+            <span asp-validation-for="Sector" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="DireccionDetalle" class="form-label">Calle, número y referencias</label>
+        <input asp-for="DireccionDetalle" class="form-control" autocomplete="street-address" />
+        <span asp-validation-for="DireccionDetalle" class="text-danger"></span>
+    </div>
+
+    <fieldset class="mb-3">
+        <legend class="h6">Quiero recibir avisos por</legend>
+        <div class="form-check form-check-inline">
+            <input asp-for="AvisosSms" class="form-check-input" />
+            <label asp-for="AvisosSms" class="form-check-label">SMS</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input asp-for="AvisosEmail" class="form-check-input" />
+            <label asp-for="AvisosEmail" class="form-check-label">Correo electrónico</label>
+        </div>
+    </fieldset>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-top pt-3">
+        <a asp-action="Identificacion" class="btn btn-link">Volver al paso 1</a>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-outline-secondary" formaction="@Url.Action("GuardarYSalir")" formnovalidate>Guardar y salir</button>
+            <button type="submit" class="btn btn-primary">Continuar al paso 3</button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

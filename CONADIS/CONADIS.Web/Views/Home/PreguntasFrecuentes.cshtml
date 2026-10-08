@@ -1,0 +1,37 @@
+﻿@{
+    ViewData["Title"] = "Preguntas frecuentes";
+}
+<h1 class="h2 mb-4">Preguntas frecuentes</h1>
+
+<div class="accordion" id="faq">
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#p1" aria-expanded="true" aria-controls="p1">
+                ¿Cuánto cuesta el carnet?
+            </button>
+        </h2>
+        <div id="p1" class="accordion-collapse collapse show" data-bs-parent="#faq">
+            <div class="accordion-body">La certificación y el primer carnet son gratuitos. El duplicado tiene un costo administrativo.</div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#p2" aria-expanded="false" aria-controls="p2">
+                ¿Puedo consultar mi trámite sin crear una cuenta?
+            </button>
+        </h2>
+        <div id="p2" class="accordion-collapse collapse" data-bs-parent="#faq">
+            <div class="accordion-body">Sí. Usa tu número de trámite y tu cédula en <a asp-controller="Tramites" asp-action="Consultar">Consultar un trámite</a>.</div>
+        </div>
+    </div>
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#p3" aria-expanded="false" aria-controls="p3">
+                ¿Qué pasa si el comité no aprueba mi solicitud?
+            </button>
+        </h2>
+        <div id="p3" class="accordion-collapse collapse" data-bs-parent="#faq">
+            <div class="accordion-body">Tienes 30 días para apelar desde el detalle de tu trámite.</div>
+        </div>
+    </div>
+</div>
