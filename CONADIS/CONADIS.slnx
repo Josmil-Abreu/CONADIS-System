@@ -8,4 +8,7 @@
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="CONADIS.UnitTests/CONADIS.UnitTests.csproj" Id="f84b7773-f217-48e4-b566-4a2c40d2ddca" />
+  </Folder>
 </Solution>
