@@ -102,4 +102,17 @@ public class Expediente
             CarnetVigente?.MarcarVencido();
         }
     }
+
+    public Result AsignarEvaluacion(EvaluacionCIF evaluacion)
+    {
+        if (Estado != EstadoExpediente.Solicitado && Estado != EstadoExpediente.EnApelacion && Estado != EstadoExpediente.EnEvaluacion)
+            return Result.Failure("Transición inválida: El expediente no está en un estado válido para recibir evaluación.");
+
+        if (evaluacion.Estado != EstadoEvaluacion.Consolidada)
+            return Result.Failure("La evaluación CIF debe estar consolidada antes de vincularla al expediente.");
+
+        EvaluacionVigente = evaluacion;
+        Estado = EstadoExpediente.EnEvaluacion;
+        return Result.Success();
+    }
 }
