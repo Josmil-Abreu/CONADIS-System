@@ -10,8 +10,4 @@
     <ProjectReference Include="..\CONADIS.Domain\CONADIS.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Interfaces\" />
-  </ItemGroup>
-
 </Project>
