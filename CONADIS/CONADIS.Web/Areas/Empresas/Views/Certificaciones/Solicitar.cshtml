@@ -1,0 +1,132 @@
+﻿@model CertificacionAccesibilidadVM
+@{
+    ViewData["Title"] = "Solicitar certificación de accesibilidad";
+    var provincias = new[] { "Distrito Nacional", "Santo Domingo", "Santiago", "La Vega", "San Cristóbal", "Puerto Plata", "La Romana", "La Altagracia" };
+}
+
+<h1 class="h2">Solicitar certificación de accesibilidad</h1>
+<p class="text-muted">Para obras en diseño o construcción y establecimientos abiertos al público.</p>
+
+<form asp-action="Solicitar" method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <section class="tarjeta mb-3">
+                <h2 class="h5">Empresa solicitante</h2>
+                <p class="mb-1">@Model.RazonSocial · RNC @Model.Rnc</p>
+                @if (Model.RncActivo)
+                {
+                    <span class="badge bg-success">RNC activo según la DGII</span>
+                }
+            </section>
+
+            <section class="tarjeta mb-3">
+                <h2 class="h5">Datos del inmueble</h2>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="TipoInmueble" class="form-label">Tipo de inmueble</label>
+                        <select asp-for="TipoInmueble" class="form-select">
+                            <option value="">Elige una opción</option>
+                            <option>Comercio</option>
+                            <option>Oficina</option>
+                            <option>Centro de salud</option>
+                            <option>Centro educativo</option>
+                            <option>Hotel o restaurante</option>
+                            <option>Otro</option>
+                        </select>
+                        <span asp-validation-for="TipoInmueble" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Etapa" class="form-label">Etapa</label>
+                        <select asp-for="Etapa" class="form-select">
+                            <option value="">Elige una opción</option>
+                            <option>En diseño</option>
+                            <option>En construcción</option>
+                            <option>En operación</option>
+                        </select>
+                        <span asp-validation-for="Etapa" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="NombreObra" class="form-label">Nombre de la obra o establecimiento</label>
+                    <input asp-for="NombreObra" class="form-control" />
+                    <span asp-validation-for="NombreObra" class="text-danger"></span>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Direccion" class="form-label">Dirección</label>
+                        <input asp-for="Direccion" class="form-control" />
+                        <span asp-validation-for="Direccion" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="Provincia" class="form-label">Provincia</label>
+                        <select asp-for="Provincia" class="form-select">
+                            <option value="">Elige</option>
+                            @foreach (var p in provincias) { <option value="@p">@p</option> }
+                        </select>
+                        <span asp-validation-for="Provincia" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="AreaM2" class="form-label">Área (m²)</label>
+                        <input asp-for="AreaM2" class="form-control" min="1" />
+                        <span asp-validation-for="AreaM2" class="text-danger"></span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tarjeta mb-3">
+                <h2 class="h5">Planos o memoria descriptiva</h2>
+                <p class="form-text mt-0">PDF, máximo 50 MB por archivo. <a href="#">Ver guía de requisitos (PDF)</a></p>
+                <div class="zona-archivos">
+                    <label for="Planos" class="form-label">Arrastra tus archivos o elígelos</label>
+                    <input id="Planos" name="Planos" type="file" class="form-control" accept=".pdf" multiple />
+                </div>
+                <span asp-validation-for="Planos" class="text-danger"></span>
+            </section>
+
+            <section class="tarjeta">
+                <h2 class="h5">Persona de contacto</h2>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="ContactoNombre" class="form-label">Nombre</label>
+                        <input asp-for="ContactoNombre" class="form-control" autocomplete="name" />
+                        <span asp-validation-for="ContactoNombre" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="ContactoTelefono" class="form-label">Teléfono</label>
+                        <input asp-for="ContactoTelefono" class="form-control" type="tel" autocomplete="tel" />
+                        <span asp-validation-for="ContactoTelefono" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label asp-for="ContactoEmail" class="form-label">Correo</label>
+                        <input asp-for="ContactoEmail" class="form-control" autocomplete="email" />
+                        <span asp-validation-for="ContactoEmail" class="text-danger"></span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <aside class="col-lg-4">
+            <div class="tarjeta mb-3">
+                <h2 class="h5">Resumen de costo</h2>
+                <dl class="row mb-2">
+                    <dt class="col-7">Tasa de certificación de accesibilidad</dt>
+                    <dd class="col-5 text-end fw-bold">RD$ @Model.MontoTasa.ToString("N2")</dd>
+                </dl>
+                <p class="small text-muted">Según el catálogo de tasas vigente. Recibirás un comprobante fiscal electrónico (e-CF).</p>
+                <div class="d-grid gap-2">
+                    <button type="submit" name="Accion" value="pagar" class="btn btn-primary">Continuar al pago</button>
+                    <button type="submit" name="Accion" value="ventanilla" class="btn btn-outline-secondary">Pagar después en ventanilla</button>
+                </div>
+            </div>
+            <div class="tarjeta">
+                <h2 class="h6">¿Qué evaluamos?</h2>
+                <p class="small mb-0">Accesos y rampas, circulación interior, baños accesibles, señalización y estacionamientos reservados.</p>
+            </div>
+        </aside>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

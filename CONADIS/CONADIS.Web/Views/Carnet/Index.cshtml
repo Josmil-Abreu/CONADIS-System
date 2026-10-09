@@ -1,0 +1,72 @@
+﻿@model MiCarnetVM
+@{
+    ViewData["Title"] = "Mi carnet digital";
+}
+
+<div class="d-flex align-items-center gap-2 mb-3">
+    <h1 class="h2 mb-0">Mi carnet digital</h1>
+    <span class="badge @(Model.Estado == "Carnetizado" ? "bg-success" : "bg-secondary")">@(Model.Estado == "Carnetizado" ? "Vigente" : VistaHelpers.EstadoTexto(Model.Estado))</span>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="carnet mb-3" role="img" aria-label="Carnet de persona con discapacidad de @Model.NombreCompleto, número @Model.NumeroCarnet">
+            <p class="small fw-semibold mb-3">CONADIS · CARNET DE PERSONA CON DISCAPACIDAD</p>
+            <div class="d-flex gap-3">
+                <div class="foto">[Foto]</div>
+                <div class="flex-grow-1">
+                    <p class="fw-bold mb-1">@Model.NombreCompleto</p>
+                    <p class="small mb-0">Cédula: @Model.CedulaEnmascarada</p>
+                    <p class="small mb-0">Carnet N.º @Model.NumeroCarnet</p>
+                    <p class="small mb-0">Emitido: @Model.FechaEmision.ToString("dd/MM/yyyy")</p>
+                    <p class="small mb-0">Vence: @(Model.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "Permanente")</p>
+                </div>
+                <div class="qr">[QR de verificación]</div>
+            </div>
+        </div>
+        <p class="small text-muted">El QR solo contiene un código firmado para verificar el carnet; no incluye datos médicos.</p>
+
+        <section class="tarjeta" aria-labelledby="tituloDictamen">
+            <h2 id="tituloDictamen" class="h5">Datos del dictamen</h2>
+            <dl class="row mb-2">
+                <dt class="col-sm-5">Tipo de discapacidad</dt><dd class="col-sm-7">@Model.TipoDiscapacidad</dd>
+                <dt class="col-sm-5">Grado</dt><dd class="col-sm-7">@Model.Grado</dd>
+                <dt class="col-sm-5">Número de certificado</dt><dd class="col-sm-7">@(Model.NumeroCertificado ?? "—")</dd>
+            </dl>
+            <p class="small text-muted mb-0">Esta información solo la ves tú (y tu tutor, si aplica).</p>
+        </section>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="tarjeta mb-3 d-grid gap-2">
+            <a class="btn btn-primary" asp-action="DescargarPdf">Descargar carnet (PDF)</a>
+            <a class="btn btn-outline-primary" asp-action="DescargarCertificado">Descargar certificado de discapacidad</a>
+            <button type="button" class="btn btn-outline-secondary" id="btnCopiar" data-enlace="@Model.UrlVerificacion">Copiar enlace de verificación</button>
+            <p id="avisoCopiar" class="small text-success mb-0" aria-live="polite"></p>
+        </div>
+
+        <div class="tarjeta mb-3">
+            <h2 class="h5">¿Perdiste tu carnet físico?</h2>
+            <p>Puedes pedir un duplicado. Tiene un costo administrativo.</p>
+            <a class="btn btn-outline-primary" asp-action="SolicitarDuplicado">Solicitar duplicado</a>
+        </div>
+
+        <div class="tarjeta">
+            <h2 class="h5">Renovación</h2>
+            <p class="mb-0">Te avisaremos 60 días antes del vencimiento para iniciar la renovación.</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('btnCopiar').addEventListener('click', async (ev) => {
+            try {
+                await navigator.clipboard.writeText(ev.currentTarget.dataset.enlace);
+                document.getElementById('avisoCopiar').textContent = 'Enlace copiado.';
+            } catch {
+                document.getElementById('avisoCopiar').textContent = 'No se pudo copiar el enlace.';
+            }
+        });
+    </script>
+}

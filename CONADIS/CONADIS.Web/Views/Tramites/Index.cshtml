@@ -1,0 +1,108 @@
+﻿@model MisTramitesVM
+@{
+    ViewData["Title"] = "Mis trámites";
+}
+
+<div class="row g-4">
+    <nav class="col-lg-3" aria-label="Mi cuenta">
+        <div class="list-group">
+            <a class="list-group-item list-group-item-action active" aria-current="page" asp-action="Index">Mis trámites</a>
+            <a class="list-group-item list-group-item-action" asp-controller="Carnet" asp-action="Index">Mi carnet</a>
+            <span class="list-group-item text-muted">Personas que represento</span>
+            <span class="list-group-item text-muted">Notificaciones</span>
+            <span class="list-group-item text-muted">Mi perfil y preferencias</span>
+        </div>
+    </nav>
+
+    <div class="col-lg-9">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h2 mb-0">Mis trámites</h1>
+            <a class="btn btn-primary" asp-controller="SolicitudCarnet" asp-action="Nueva">Nueva solicitud</a>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><div class="tarjeta h-100">
+                <h2 class="h6 text-muted">Mi carnet</h2>
+                <p class="fw-semibold mb-1">@Model.EstadoCarnet</p>
+                <p class="small mb-0">Se emite cuando el comité apruebe tu solicitud.</p>
+            </div></div>
+            <div class="col-md-4"><div class="tarjeta h-100">
+                <h2 class="h6 text-muted">Próxima cita</h2>
+                <p class="fw-semibold mb-1">@(Model.ProximaCita?.ToString("dd/MM/yyyy, h:mm tt") ?? "Sin citas")</p>
+                <p class="small mb-0">@Model.CentroProximaCita</p>
+            </div></div>
+            <div class="col-md-4"><div class="tarjeta h-100">
+                <h2 class="h6 text-muted">Pendiente de tu parte</h2>
+                <p class="fw-semibold mb-1">@Model.AccionesPendientes acción(es)</p>
+            </div></div>
+        </div>
+
+        <section class="tarjeta mb-4" aria-labelledby="tituloLista">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h2 id="tituloLista" class="h5 mb-0">Trámites</h2>
+                <form method="get" asp-action="Index" class="d-flex gap-2">
+                    <label for="estado" class="col-form-label">Mostrar</label>
+                    <select id="estado" name="estado" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">Todos</option>
+                        <option value="Solicitado" selected="@(Model.FiltroEstado == "Solicitado")">Solicitado</option>
+                        <option value="EnEvaluacion" selected="@(Model.FiltroEstado == "EnEvaluacion")">En evaluación</option>
+                        <option value="Carnetizado" selected="@(Model.FiltroEstado == "Carnetizado")">Carnetizado</option>
+                    </select>
+                    <noscript><button type="submit" class="btn btn-sm btn-outline-primary">Filtrar</button></noscript>
+                </form>
+            </div>
+
+            @if (!Model.Tramites.Any())
+            {
+                <p class="mb-0">Aún no tienes trámites. <a asp-controller="SolicitudCarnet" asp-action="Nueva">Inicia tu solicitud de carnet</a>.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <caption class="visually-hidden">Lista de tus trámites</caption>
+                        <thead>
+                            <tr><th scope="col">Número</th><th scope="col">Trámite</th><th scope="col">Persona</th><th scope="col">Estado</th><th scope="col">Actualizado</th><th scope="col"><span class="visually-hidden">Acciones</span></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var t in Model.Tramites)
+                            {
+                                <tr>
+                                    <td>@t.Numero</td>
+                                    <td>@t.Tipo</td>
+                                    <td>@t.Persona</td>
+                                    <td><span class="badge @VistaHelpers.EstadoClase(t.Estado)">@VistaHelpers.EstadoTexto(t.Estado)</span></td>
+                                    <td>@t.Actualizado.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        @if (t.Estado == "Carnetizado")
+                                        {
+                                            <a asp-controller="Carnet" asp-action="Index">Ver carnet</a>
+                                        }
+                                        else
+                                        {
+                                            <a asp-action="Detalle" asp-route-id="@t.Numero">Ver detalle<span class="visually-hidden"> de @t.Numero</span></a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        <section class="tarjeta" aria-labelledby="tituloAvisos">
+            <h2 id="tituloAvisos" class="h5">Avisos recientes</h2>
+            @if (Model.AvisosRecientes.Any())
+            {
+                <ul class="mb-0">
+                    @foreach (var a in Model.AvisosRecientes) { <li>@a</li> }
+                </ul>
+            }
+            else
+            {
+                <p class="mb-0 text-muted">No tienes avisos nuevos.</p>
+            }
+        </section>
+    </div>
+</div>

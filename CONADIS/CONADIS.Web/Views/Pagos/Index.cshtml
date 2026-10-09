@@ -1,0 +1,81 @@
+﻿@model OrdenPagoVM
+@{
+    ViewData["Title"] = "Pagar la tasa";
+}
+
+<nav aria-label="Ruta de navegación">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Carnet" asp-action="Index">Mi carnet</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Carnet" asp-action="SolicitarDuplicado">Duplicado</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Pago</li>
+    </ol>
+</nav>
+
+<h1 class="h2 mb-3">Pagar la tasa del duplicado</h1>
+
+<form id="formPago" asp-action="Pagar" method="post">
+    <input type="hidden" name="id" value="@Model.NumeroOrden" />
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <fieldset class="tarjeta mb-3">
+                <legend class="h5">Comprobante fiscal</legend>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="TipoComprobante" value="consumo" id="cf1" checked />
+                    <label class="form-check-label" for="cf1">Factura de consumo (a mi nombre)</label>
+                </div>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio" name="TipoComprobante" value="credito" id="cf2" />
+                    <label class="form-check-label" for="cf2">Factura de crédito fiscal (necesito RNC)</label>
+                </div>
+                <div id="grupoRncComprador" hidden>
+                    <label for="RncComprador" class="form-label">RNC o cédula del comprador</label>
+                    <input id="RncComprador" name="RncComprador" class="form-control" inputmode="numeric" />
+                </div>
+            </fieldset>
+
+            <fieldset class="tarjeta">
+                <legend class="h5">Forma de pago</legend>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="FormaPago" value="tarjeta" id="fp1" checked />
+                    <label class="form-check-label" for="fp1">Tarjeta de crédito o débito en línea</label>
+                    <div class="form-text">Serás dirigido a la pasarela de pago segura del banco. El CONADIS no recibe ni guarda el número de la tarjeta.</div>
+                </div>
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="radio" name="FormaPago" value="ventanilla" id="fp2" />
+                    <label class="form-check-label" for="fp2">Pagar en ventanilla del CONADIS</label>
+                    <div class="form-text">Presenta tu número de orden en cualquier caja.</div>
+                </div>
+            </fieldset>
+        </div>
+
+        <aside class="col-lg-5">
+            <div class="tarjeta">
+                <h2 class="h5">Resumen</h2>
+                <dl class="row">
+                    <dt class="col-7">Orden de cobro</dt><dd class="col-5 text-end">@Model.NumeroOrden</dd>
+                    <dt class="col-7">@Model.Concepto</dt><dd class="col-5 text-end">RD$ @Model.Monto.ToString("N2")</dd>
+                    <dt class="col-7 border-top pt-2">Total</dt><dd class="col-5 text-end border-top pt-2 fw-bold">RD$ @Model.Monto.ToString("N2")</dd>
+                </dl>
+                <button type="submit" id="btnPagar" class="btn btn-primary w-100">Pagar RD$ @Model.Monto.ToString("N2")</button>
+                <p class="small text-muted mt-3 mb-0">Al pagar recibirás tu e-CF por correo y podrás descargarlo en Mis trámites. El trámite continúa automáticamente.</p>
+            </div>
+        </aside>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        const form = document.getElementById('formPago');
+        const btn = document.getElementById('btnPagar');
+
+        document.querySelectorAll('input[name="TipoComprobante"]').forEach(r => r.addEventListener('change', () => {
+            document.getElementById('grupoRncComprador').hidden = r.value !== 'credito' || !r.checked;
+        }));
+
+        document.querySelectorAll('input[name="FormaPago"]').forEach(r => r.addEventListener('change', () => {
+            const ventanilla = r.value === 'ventanilla' && r.checked;
+            form.action = ventanilla ? '@Url.Action("Ventanilla")' : '@Url.Action("Pagar")';
+            btn.textContent = ventanilla ? 'Generar orden para ventanilla' : 'Pagar RD$ @Model.Monto.ToString("N2")';
+        }));
+    </script>
+}

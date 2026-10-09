@@ -6,7 +6,9 @@
   <Folder Name="/Infraestructura/">
     <Project Path="CONADIS.Infrastructure/CONADIS.Infrastructure.csproj" Id="87146db7-99fd-416c-b55d-dd572240168a" />
   </Folder>
-  <Folder Name="/Presentacion/" />
+  <Folder Name="/Presentacion/">
+    <Project Path="CONADIS.Web/CONADIS.Web.csproj" Id="2072f918-a71d-4618-ad4e-8b8cd9d69f1b" />
+  </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>

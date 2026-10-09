@@ -1,0 +1,10 @@
+﻿@{
+    ViewData["Title"] = "Solicitud de ayuda técnica enviada";
+}
+<section class="tarjeta text-center">
+    <h1 class="h2">Recibimos tu solicitud de ayuda técnica</h1>
+    <p class="mb-1">Tu número de trámite es</p>
+    <p class="display-6 fw-bold">@ViewBag.NumeroTramite</p>
+    <p>Te avisaremos por SMS y correo cuando el equipo evalúe tu solicitud.</p>
+    <a class="btn btn-primary" asp-controller="Tramites" asp-action="Index">Ir a Mis trámites</a>
+</section>

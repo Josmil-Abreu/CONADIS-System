@@ -1,0 +1,139 @@
+﻿@model SolicitudAyudaVM
+@{
+    ViewData["Title"] = "Solicitar una ayuda técnica";
+    var categorias = new (CategoriaAyuda Valor, string Texto)[]
+    {
+        (CategoriaAyuda.Movilidad, "Movilidad"), (CategoriaAyuda.Audicion, "Audición"),
+        (CategoriaAyuda.Vision, "Visión"), (CategoriaAyuda.Comunicacion, "Comunicación"), (CategoriaAyuda.Otra, "Otra")
+    };
+}
+
+<nav aria-label="Ruta de navegación">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Inicio</a></li>
+        <li class="breadcrumb-item">Ayudas técnicas</li>
+        <li class="breadcrumb-item active" aria-current="page">Nueva solicitud</li>
+    </ol>
+</nav>
+
+<h1 class="h2">Solicitar una ayuda técnica</h1>
+<p class="text-muted">Productos de apoyo que mejoran tu autonomía: sillas de ruedas, audífonos, bastones, lectores de pantalla y otros.</p>
+
+@if (Model.CarnetVigente)
+{
+    <div class="alert alert-success">Carnet vigente. Puedes solicitar ayudas técnicas para: <strong>@Model.NombreTitular</strong>.</div>
+}
+
+<form asp-action="Index" method="post" enctype="multipart/form-data" class="tarjeta">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+    <fieldset class="mb-4">
+        <legend class="h5">1. ¿Qué tipo de ayuda necesitas?</legend>
+        <div class="d-flex flex-wrap gap-3">
+            @foreach (var c in categorias)
+            {
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" asp-for="Categoria" value="@c.Valor" id="cat-@c.Valor" />
+                    <label class="form-check-label" for="cat-@c.Valor">@c.Texto</label>
+                </div>
+            }
+        </div>
+        <span asp-validation-for="Categoria" class="text-danger"></span>
+    </fieldset>
+
+    <div class="mb-4">
+        <label asp-for="Producto" class="form-label h5">2. Producto</label>
+        <select asp-for="Producto" class="form-select" data-actual="@Model.Producto">
+            <option value="">Primero elige el tipo de ayuda</option>
+        </select>
+        <span asp-validation-for="Producto" class="text-danger"></span>
+    </div>
+
+    <div class="mb-4">
+        <label asp-for="Justificacion" class="form-label h5">3. ¿Para qué la necesitas?</label>
+        <p class="form-text mt-0">Cuéntanos en tus palabras cómo te ayudaría en tu día a día. Puedes enviar un audio si te resulta más fácil.</p>
+        <textarea asp-for="Justificacion" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Justificacion" class="text-danger"></span>
+        <label asp-for="AudioJustificacion" class="form-label mt-2">O sube un audio en su lugar</label>
+        <input asp-for="AudioJustificacion" type="file" class="form-control" accept="audio/*" capture />
+    </div>
+
+    <div class="mb-4">
+        <label asp-for="PrescripcionMedica" class="form-label h5">4. Prescripción médica (obligatoria)</label>
+        <div class="zona-archivos">
+            <input asp-for="PrescripcionMedica" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" />
+        </div>
+        <span asp-validation-for="PrescripcionMedica" class="text-danger"></span>
+    </div>
+
+    <fieldset class="mb-4">
+        <legend class="h5">5. Situación del hogar</legend>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label asp-for="SituacionLaboral" class="form-label">Situación laboral</label>
+                <select asp-for="SituacionLaboral" class="form-select">
+                    <option value="">Elige una opción</option>
+                    <option>Empleado</option>
+                    <option>Trabajo por cuenta propia</option>
+                    <option>Desempleado</option>
+                    <option>Estudiante</option>
+                    <option>Pensionado</option>
+                </select>
+                <span asp-validation-for="SituacionLaboral" class="text-danger"></span>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="IngresoMensualHogar" class="form-label">Ingreso mensual del hogar</label>
+                <select asp-for="IngresoMensualHogar" class="form-select">
+                    <option value="">Elige un rango</option>
+                    <option>Menos de RD$15,000</option>
+                    <option>RD$15,000 a RD$30,000</option>
+                    <option>RD$30,001 a RD$50,000</option>
+                    <option>Más de RD$50,000</option>
+                </select>
+                <span asp-validation-for="IngresoMensualHogar" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="form-check">
+            <input asp-for="RecibioAyudaSimilar" class="form-check-input" />
+            <label asp-for="RecibioAyudaSimilar" class="form-check-label">Ya recibí una ayuda técnica similar en los últimos 3 años</label>
+        </div>
+    </fieldset>
+
+    <fieldset class="mb-4">
+        <legend class="h5">6. ¿Cómo prefieres recibirla?</legend>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" asp-for="FormaEntrega" value="@FormaEntrega.RetiroEnSede" id="fe1" />
+            <label class="form-check-label" for="fe1">Retirar en una sede del CONADIS</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" asp-for="FormaEntrega" value="@FormaEntrega.Domicilio" id="fe2" />
+            <label class="form-check-label" for="fe2">Entrega a domicilio (sujeto a evaluación)</label>
+        </div>
+    </fieldset>
+
+    <div class="d-flex flex-wrap justify-content-end gap-2 border-top pt-3">
+        <button type="submit" name="accion" value="borrador" class="btn btn-outline-secondary" formnovalidate>Guardar borrador</button>
+        <button type="submit" name="accion" value="enviar" class="btn btn-primary">Revisar y enviar</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const selProducto = document.getElementById('Producto');
+
+        async function cargarProductos(categoria) {
+            const r = await fetch('@Url.Action("ListaProductos")?categoria=' + encodeURIComponent(categoria));
+            const productos = await r.json();
+            const actual = selProducto.dataset.actual;
+            selProducto.innerHTML = '<option value="">Elige un producto</option>';
+            productos.forEach(p => selProducto.add(new Option(p, p, false, p === actual)));
+        }
+
+        document.querySelectorAll('input[name="Categoria"]').forEach(r =>
+            r.addEventListener('change', () => cargarProductos(r.value)));
+
+        const marcada = document.querySelector('input[name="Categoria"]:checked');
+        if (marcada) cargarProductos(marcada.value);
+    </script>
+}

@@ -1,0 +1,81 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · CONADIS Portal Ciudadano</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/CONADIS.Web.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <partial name="_BarraAccesibilidad" />
+
+    <header class="encabezado">
+        <nav class="navbar navbar-expand-lg" aria-label="Menú principal">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                    <span class="logo" aria-hidden="true">C</span>
+                    <span class="lh-sm"><strong>CONADIS</strong><br /><small class="text-muted">Portal Ciudadano</small></span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal"
+                        aria-controls="menuPrincipal" aria-expanded="false" aria-label="Abrir menú">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="menuPrincipal">
+                    <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Inicio</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="SolicitudCarnet" asp-action="Index">Solicitar carnet</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Tramites" asp-action="Index">Mis trámites</a></li>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Carnet" asp-action="Index">Mi carnet</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="AyudasTecnicas" asp-action="Index">Ayudas técnicas</a></li>
+                            <li class="nav-item"><span class="nav-link fw-semibold">@User.Identity.Name</span></li>
+                            <li class="nav-item">
+                                <form asp-controller="Cuenta" asp-action="CerrarSesion" method="post">
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm">Cerrar sesión</button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="AyudasTecnicas" asp-action="Index">Ayudas técnicas</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Verificacion" asp-action="Index">Verificar carnet</a></li>
+                            <li class="nav-item"><a class="btn btn-primary btn-sm" asp-controller="Cuenta" asp-action="IniciarSesion">Iniciar sesión</a></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main id="contenido" class="container py-4" tabindex="-1">
+        <partial name="_Mensajes" />
+        @RenderBody()
+    </main>
+
+    <footer class="border-top bg-white py-4 mt-4">
+        <div class="container d-flex flex-wrap justify-content-between gap-3">
+            <div>
+                <strong>CONADIS</strong><br />
+                [Dirección institucional]<br />
+                [Teléfono] · [Correo]
+            </div>
+            <nav aria-label="Enlaces del pie de página">
+                <ul class="list-unstyled d-flex flex-wrap gap-3 mb-0">
+                    <li><a href="#">Transparencia</a></li>
+                    <li><a asp-controller="Home" asp-action="Accesibilidad">Declaración de accesibilidad</a></li>
+                    <li><a asp-controller="Home" asp-action="Privacidad">Privacidad y datos personales</a></li>
+                    <li><a asp-controller="Home" asp-action="PreguntasFrecuentes">Preguntas frecuentes</a></li>
+                </ul>
+            </nav>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

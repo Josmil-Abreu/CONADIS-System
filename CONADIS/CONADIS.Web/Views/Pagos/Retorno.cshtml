@@ -1,0 +1,20 @@
+﻿@model OrdenPagoVM
+@{
+    ViewData["Title"] = "Resultado del pago";
+    var pagada = Model.Estado == "Pagada";
+}
+<section class="tarjeta text-center" aria-live="polite">
+    @if (pagada)
+    {
+        <h1 class="h2">Pago realizado</h1>
+        <p>Recibimos el pago de la orden <strong>@Model.NumeroOrden</strong> por RD$ @Model.Monto.ToString("N2").</p>
+        <p>Te enviamos el comprobante fiscal (e-CF) por correo. Tu trámite continúa automáticamente.</p>
+        <a class="btn btn-primary" asp-controller="Tramites" asp-action="Index">Ir a Mis trámites</a>
+    }
+    else
+    {
+        <h1 class="h2">No pudimos procesar el pago</h1>
+        <p>El banco no aprobó la operación. No se realizó ningún cobro.</p>
+        <a class="btn btn-primary" asp-action="Index" asp-route-id="@Model.NumeroOrden">Intentar de nuevo</a>
+    }
+</section>

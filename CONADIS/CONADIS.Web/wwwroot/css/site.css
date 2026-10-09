@@ -1,0 +1,299 @@
+:root {
+    --conadis-azul: #0b4f8a;
+    --conadis-azul-osc: #083a66;
+    --conadis-verde: #1e7b45;
+    --borde: #d0d7de;
+}
+
+html {
+    font-size: 16px;
+}
+
+    html.texto-grande {
+        font-size: 18px;
+    }
+
+    html.texto-muy-grande {
+        font-size: 20px;
+    }
+
+body {
+    background: #f6f8fa;
+    color: #1f2328;
+}
+
+/* Enlace "Saltar al contenido principal" */
+.saltar-contenido {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 2000;
+    background: #fff;
+    padding: .5rem 1rem;
+}
+
+    .saltar-contenido:focus {
+        left: 1rem;
+    }
+
+:focus-visible {
+    outline: 3px solid #ffbf47 !important;
+    outline-offset: 2px;
+}
+
+.barra-gob {
+    background: var(--conadis-azul-osc);
+    color: #fff;
+    font-size: .85rem;
+}
+
+.barra-accesibilidad {
+    background: #e9eef4;
+    font-size: .85rem;
+}
+
+    .barra-accesibilidad .btn[aria-pressed="true"] {
+        background: var(--conadis-azul);
+        color: #fff;
+    }
+
+.encabezado {
+    background: #fff;
+    border-bottom: 3px solid var(--conadis-azul);
+}
+
+.logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    background: var(--conadis-azul);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.navbar .nav-link {
+    color: #1f2328;
+}
+
+    .navbar .nav-link:hover {
+        color: var(--conadis-azul);
+        text-decoration: underline;
+    }
+
+.btn-primary {
+    background: var(--conadis-azul);
+    border-color: var(--conadis-azul);
+}
+
+    .btn-primary:hover {
+        background: var(--conadis-azul-osc);
+        border-color: var(--conadis-azul-osc);
+    }
+
+.tarjeta {
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: .5rem;
+    padding: 1.25rem;
+}
+
+a.tarjeta {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    height: 100%;
+}
+
+    a.tarjeta:hover {
+        border-color: var(--conadis-azul);
+        box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+
+.hero {
+    background: #fff;
+    border-bottom: 1px solid var(--borde);
+}
+
+.video-placeholder {
+    background: #e9eef4;
+    border: 2px dashed var(--borde);
+    border-radius: .5rem;
+    min-height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1rem;
+}
+
+.numero-paso {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: var(--conadis-azul);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+/* Indicador de pasos del asistente */
+.pasos ol {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    gap: .5rem;
+    margin: 0;
+}
+
+.pasos li {
+    flex: 1;
+    border-top: 4px solid var(--borde);
+    padding-top: .5rem;
+    font-size: .9rem;
+    color: #57606a;
+}
+
+    .pasos li.completo {
+        border-color: var(--conadis-verde);
+        color: var(--conadis-verde);
+    }
+
+    .pasos li.actual {
+        border-color: var(--conadis-azul);
+        color: var(--conadis-azul);
+        font-weight: 600;
+    }
+
+/* Línea de tiempo del trámite */
+.linea-tiempo {
+    list-style: none;
+    padding-left: 0;
+}
+
+    .linea-tiempo li {
+        position: relative;
+        padding: 0 0 1.25rem 1.75rem;
+        border-left: 2px solid var(--borde);
+        margin-left: .6rem;
+    }
+
+        .linea-tiempo li:last-child {
+            border-left-color: transparent;
+        }
+
+        .linea-tiempo li::before {
+            content: "";
+            position: absolute;
+            left: -.6rem;
+            top: .15rem;
+            width: 1.1rem;
+            height: 1.1rem;
+            border-radius: 50%;
+            background: #fff;
+            border: 2px solid var(--borde);
+        }
+
+        .linea-tiempo li.hecho::before {
+            background: var(--conadis-verde);
+            border-color: var(--conadis-verde);
+        }
+
+        .linea-tiempo li.actual::before {
+            background: var(--conadis-azul);
+            border-color: var(--conadis-azul);
+        }
+
+/* Carnet digital */
+.carnet {
+    max-width: 440px;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, var(--conadis-azul), var(--conadis-verde));
+    color: #fff;
+    padding: 1.25rem;
+}
+
+.foto, .qr {
+    background: #fff;
+    color: #57606a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .7rem;
+    text-align: center;
+    border-radius: .25rem;
+}
+
+.foto {
+    width: 80px;
+    height: 100px;
+}
+
+.qr {
+    width: 96px;
+    height: 96px;
+}
+
+/* Resultados de verificación */
+.resultado {
+    border-left: 6px solid var(--borde);
+}
+
+    .resultado.vigente {
+        border-left-color: var(--conadis-verde);
+    }
+
+    .resultado.vencido {
+        border-left-color: #bf8700;
+    }
+
+    .resultado.anulado, .resultado.no-encontrado {
+        border-left-color: #cf222e;
+    }
+
+.zona-archivos {
+    border: 2px dashed var(--borde);
+    border-radius: .5rem;
+    padding: 1.5rem;
+    text-align: center;
+    background: #fff;
+}
+
+/* Alto contraste */
+html.alto-contraste body,
+html.alto-contraste .tarjeta,
+html.alto-contraste .encabezado,
+html.alto-contraste .hero,
+html.alto-contraste .barra-accesibilidad,
+html.alto-contraste .zona-archivos,
+html.alto-contraste .table,
+html.alto-contraste footer {
+    background: #000 !important;
+    color: #fff !important;
+    border-color: #fff !important;
+}
+
+html.alto-contraste a,
+html.alto-contraste .nav-link {
+    color: #ffeb3b !important;
+}
+
+html.alto-contraste .text-muted {
+    color: #ddd !important;
+}
+
+html.alto-contraste .btn-primary {
+    background: #ffeb3b;
+    color: #000;
+    border-color: #ffeb3b;
+}
+
+@media print {
+    .barra-gob, .barra-accesibilidad, header, footer, .no-imprimir {
+        display: none !important;
+    }
+}

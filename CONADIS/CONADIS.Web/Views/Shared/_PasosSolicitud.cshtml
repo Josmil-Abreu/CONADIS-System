@@ -1,0 +1,20 @@
+﻿@model int
+@{
+    var pasos = new[] { "Identificación", "Contacto", "Diagnóstico", "Cita y apoyos", "Revisión" };
+}
+<p class="fw-semibold mb-2">Paso @Model de 5: @pasos[Model - 1]</p>
+<nav class="pasos mb-4" aria-label="Progreso de la solicitud">
+    <ol>
+        @for (var i = 1; i <= 5; i++)
+        {
+            var clase = i < Model ? "completo" : i == Model ? "actual" : "";
+            <li class="@clase" aria-current="@(i == Model ? "step" : null)">
+                @i @pasos[i - 1]
+                @if (i < Model)
+                {
+                    <span aria-hidden="true">✓</span><span class="visually-hidden">(completado)</span>
+                }
+            </li>
+        }
+    </ol>
+</nav>

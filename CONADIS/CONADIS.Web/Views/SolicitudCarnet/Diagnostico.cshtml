@@ -1,0 +1,133 @@
+﻿@model DiagnosticoVM
+@{
+    ViewData["Title"] = "Solicitud: diagnóstico";
+}
+
+<h1 class="h2">Solicitud de certificación y carnet</h1>
+<partial name="_PasosSolicitud" model="3" />
+
+<form asp-action="Diagnostico" method="post" enctype="multipart/form-data" class="tarjeta">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+    <h2 class="h5">Diagnóstico de origen</h2>
+    <p class="text-muted">Es el certificado médico que indica tu condición de salud. Lo confirmaremos con el Ministerio de Salud Pública.</p>
+
+    <div class="mb-3">
+        <label asp-for="CentroSalud" class="form-label">Centro de salud que emitió el certificado</label>
+        <input asp-for="CentroSalud" class="form-control" list="centrosSalud" autocomplete="off" aria-describedby="ayudaCentro" />
+        <datalist id="centrosSalud"></datalist>
+        <div id="ayudaCentro" class="form-text">Escribe al menos 3 letras y elige de la lista.</div>
+        <span asp-validation-for="CentroSalud" class="text-danger"></span>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <label asp-for="NumeroCertificado" class="form-label">Número del certificado médico</label>
+            <input asp-for="NumeroCertificado" class="form-control" />
+            <span asp-validation-for="NumeroCertificado" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="FechaCertificado" class="form-label">Fecha del certificado</label>
+            <input asp-for="FechaCertificado" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control" />
+            <span asp-validation-for="FechaCertificado" class="text-danger"></span>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label asp-for="CodigoCie10" class="form-label">Código CIE-10 (opcional)</label>
+            <input asp-for="CodigoCie10" class="form-control" placeholder="Ej.: G80.0" />
+        </div>
+    </div>
+
+    <h2 class="h5 mt-2">Documentos</h2>
+    <p class="text-muted">Formatos: PDF, JPG o PNG. Máximo 10 MB por archivo.</p>
+
+    <div class="mb-3">
+        <label asp-for="CertificadoMedico" class="form-label fw-semibold">Certificado médico (obligatorio)</label>
+        @if (!string.IsNullOrEmpty(Model.NombreArchivoCertificado))
+        {
+            <ul class="list-unstyled">
+                <li class="d-flex align-items-center gap-2">
+                    <span>📄 @Model.NombreArchivoCertificado · Subido</span>
+                    <button type="button" class="btn btn-link btn-sm text-danger" data-quitar="@Model.NombreArchivoCertificado">Quitar</button>
+                </li>
+            </ul>
+        }
+        <input asp-for="CertificadoMedico" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" capture="environment" />
+        <span asp-validation-for="CertificadoMedico" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label for="OtrosEstudios" class="form-label fw-semibold">Otros estudios o informes (opcional)</label>
+        @if (Model.NombresOtrosEstudios.Any())
+        {
+            <ul class="list-unstyled">
+                @foreach (var nombre in Model.NombresOtrosEstudios)
+                {
+                    <li class="d-flex align-items-center gap-2">
+                        <span>📄 @nombre</span>
+                        <button type="button" class="btn btn-link btn-sm text-danger" data-quitar="@nombre">Quitar</button>
+                    </li>
+                }
+            </ul>
+        }
+        <div class="zona-archivos">
+            <p class="mb-2">Arrastra tus archivos aquí o elígelos</p>
+            <input id="OtrosEstudios" name="OtrosEstudios" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" multiple />
+            <p class="small text-muted mt-2 mb-0">o toma una foto con el teléfono</p>
+        </div>
+        <span asp-validation-for="OtrosEstudios" class="text-danger"></span>
+    </div>
+
+    @if (Model.ValidadoPorMsp == true)
+    {
+        <div class="alert alert-success">Validación con Salud Pública: diagnóstico confirmado.</div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <strong>Validación con Salud Pública: pendiente.</strong>
+            Si el centro aún no está conectado, un médico del CONADIS revisará tu certificado; no tienes que hacer nada más.
+        </div>
+    }
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-top pt-3">
+        <a asp-action="Contacto" class="btn btn-link">Volver al paso 2</a>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-outline-secondary" formaction="@Url.Action("GuardarYSalir")" formnovalidate>Guardar y salir</button>
+            <button type="submit" class="btn btn-primary">Continuar al paso 4</button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Autocompletado de centros de salud
+        const entrada = document.getElementById('CentroSalud');
+        const lista = document.getElementById('centrosSalud');
+        let espera;
+        entrada.addEventListener('input', () => {
+            clearTimeout(espera);
+            if (entrada.value.length < 3) return;
+            espera = setTimeout(async () => {
+                const r = await fetch('@Url.Action("BuscarCentrosSalud")?q=' + encodeURIComponent(entrada.value));
+                const centros = await r.json();
+                lista.innerHTML = '';
+                centros.forEach(c => {
+                    const o = document.createElement('option');
+                    o.value = c.nombre;
+                    o.label = c.provincia;
+                    lista.appendChild(o);
+                });
+            }, 250);
+        });
+
+        // Botón "Quitar" archivo
+        document.querySelectorAll('[data-quitar]').forEach(b => b.addEventListener('click', async () => {
+            const datos = new FormData();
+            datos.append('nombre', b.dataset.quitar);
+            datos.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+            const r = await fetch('@Url.Action("QuitarArchivo")', { method: 'POST', body: datos });
+            if (r.ok) b.closest('li').remove();
+        }));
+    </script>
+}

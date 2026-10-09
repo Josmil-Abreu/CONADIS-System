@@ -1,0 +1,43 @@
+﻿@model ConsultarTramiteVM
+@{
+    ViewData["Title"] = "Consultar un trámite";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <h1 class="h2">Consultar un trámite</h1>
+        <p>No necesitas cuenta: usa tu número de trámite y tu cédula.</p>
+
+        <form asp-action="Consultar" method="post" class="tarjeta mb-4">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <div class="mb-3">
+                <label asp-for="NumeroTramite" class="form-label">Número de trámite</label>
+                <input asp-for="NumeroTramite" class="form-control text-uppercase" placeholder="EXP-2026-00000" />
+                <span asp-validation-for="NumeroTramite" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Cedula" class="form-label">Cédula del titular</label>
+                <input asp-for="Cedula" class="form-control" inputmode="numeric" />
+                <span asp-validation-for="Cedula" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">Consultar</button>
+        </form>
+
+        @if (Model.Resultado is { } r)
+        {
+            <section class="tarjeta" aria-live="polite" aria-labelledby="tituloResultado">
+                <h2 id="tituloResultado" class="h5">Trámite @r.NumeroExpediente</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Estado</dt>
+                    <dd class="col-sm-8"><span class="badge @VistaHelpers.EstadoClase(r.Estado)">@VistaHelpers.EstadoTexto(r.Estado)</span></dd>
+                    <dt class="col-sm-4">Enviado el</dt><dd class="col-sm-8">@r.FechaSolicitud.ToLocalTime().ToString("dd/MM/yyyy")</dd>
+                </dl>
+                <p class="small text-muted mt-3 mb-0">Para ver más detalles, <a asp-controller="Cuenta" asp-action="IniciarSesion">inicia sesión</a>.</p>
+            </section>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

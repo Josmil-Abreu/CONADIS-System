@@ -1,0 +1,28 @@
+﻿@model ApelacionVM
+@{
+    ViewData["Title"] = "Apelar el dictamen";
+}
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <h1 class="h2">Apelar el dictamen</h1>
+        <p class="text-muted">Trámite @Model.NumeroTramite · Tienes 30 días desde la notificación del dictamen.</p>
+        <form asp-action="Apelar" method="post" enctype="multipart/form-data" class="tarjeta">
+            <input type="hidden" asp-for="NumeroTramite" />
+            <div class="mb-3">
+                <label asp-for="Motivo" class="form-label">¿Por qué no estás de acuerdo con el dictamen?</label>
+                <textarea asp-for="Motivo" class="form-control" rows="5"></textarea>
+                <span asp-validation-for="Motivo" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="DocumentoSoporte" class="form-label">Documento de soporte (opcional)</label>
+                <input asp-for="DocumentoSoporte" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" />
+            </div>
+            <button type="submit" class="btn btn-primary">Enviar apelación</button>
+            <a asp-action="Detalle" asp-route-id="@Model.NumeroTramite" class="ms-2">Cancelar</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

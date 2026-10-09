@@ -1,0 +1,23 @@
+﻿@model OlvideContrasenaVM
+@{
+    ViewData["Title"] = "Olvidé mi contraseña";
+}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <h1 class="h2">Olvidé mi contraseña</h1>
+        <form asp-action="OlvideContrasena" method="post" class="tarjeta">
+            <p>Escribe el correo de tu cuenta y te enviaremos un enlace para cambiar tu contraseña.</p>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label">Correo electrónico</label>
+                <input asp-for="Email" class="form-control" autocomplete="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">Enviar enlace</button>
+            <a asp-action="IniciarSesion" class="ms-2">Volver</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

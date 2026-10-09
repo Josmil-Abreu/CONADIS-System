@@ -1,0 +1,65 @@
+﻿@model CitaApoyosVM
+@{
+    ViewData["Title"] = "Solicitud: cita y apoyos";
+    var centros = new[] { "Centro de valoración Santo Domingo", "Centro de valoración Santiago", "Centro de valoración San Francisco de Macorís" };
+}
+
+<h1 class="h2">Solicitud de certificación y carnet</h1>
+<partial name="_PasosSolicitud" model="4" />
+
+<form asp-action="CitaApoyos" method="post" class="tarjeta">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+    <h2 class="h5">Tu cita de valoración</h2>
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="CentroValoracion" class="form-label">Centro de valoración</label>
+            <select asp-for="CentroValoracion" class="form-select">
+                <option value="">Elige el centro más cercano</option>
+                @foreach (var c in centros)
+                {
+                    <option value="@c">@c</option>
+                }
+            </select>
+            <span asp-validation-for="CentroValoracion" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="FechaCita" class="form-label">Fecha y hora</label>
+            <input asp-for="FechaCita" class="form-control" />
+            <span asp-validation-for="FechaCita" class="text-danger"></span>
+        </div>
+    </div>
+
+    <fieldset class="mb-3">
+        <legend class="h5">¿Qué apoyos necesitas el día de la cita?</legend>
+        <div class="form-check">
+            <input asp-for="InterpreteLenguaSenas" class="form-check-input" />
+            <label asp-for="InterpreteLenguaSenas" class="form-check-label">Intérprete de Lengua de Señas</label>
+        </div>
+        <div class="form-check">
+            <input asp-for="AccesoSillaRuedas" class="form-check-input" />
+            <label asp-for="AccesoSillaRuedas" class="form-check-label">Acceso para silla de ruedas</label>
+        </div>
+        <div class="form-check">
+            <input asp-for="Acompanante" class="form-check-input" />
+            <label asp-for="Acompanante" class="form-check-label">Asistiré con un acompañante</label>
+        </div>
+    </fieldset>
+
+    <div class="mb-3">
+        <label asp-for="OtrosApoyos" class="form-label">Otros apoyos (opcional)</label>
+        <textarea asp-for="OtrosApoyos" class="form-control" rows="3"></textarea>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-top pt-3">
+        <a asp-action="Diagnostico" class="btn btn-link">Volver al paso 3</a>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-outline-secondary" formaction="@Url.Action("GuardarYSalir")" formnovalidate>Guardar y salir</button>
+            <button type="submit" class="btn btn-primary">Continuar al paso 5</button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

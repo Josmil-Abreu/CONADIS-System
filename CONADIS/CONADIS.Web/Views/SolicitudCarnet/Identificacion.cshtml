@@ -1,0 +1,120 @@
+﻿@model IdentificacionVM
+@{
+    ViewData["Title"] = "Solicitud: identificación";
+}
+
+<nav aria-label="Ruta de navegación">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Inicio</a></li>
+        <li class="breadcrumb-item"><a asp-controller="Tramites" asp-action="Index">Mis trámites</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Solicitud de carnet</li>
+    </ol>
+</nav>
+
+<h1 class="h2">Solicitud de certificación y carnet</h1>
+<p class="text-muted">Te tomará unos 10 minutos. Guardamos tu avance automáticamente.</p>
+
+<partial name="_PasosSolicitud" model="1" />
+
+<form asp-action="Identificacion" method="post" class="tarjeta">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+    <fieldset class="mb-4">
+        <legend class="h5">¿Para quién es la solicitud?</legend>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" asp-for="ParaQuien" value="@ParaQuien.ParaMi" id="pq1" />
+            <label class="form-check-label" for="pq1">Para mí</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" asp-for="ParaQuien" value="@ParaQuien.Representado" id="pq2" />
+            <label class="form-check-label" for="pq2">Para una persona que represento (menor de edad o bajo tutela)</label>
+        </div>
+    </fieldset>
+
+    <fieldset class="mb-4">
+        <legend class="h5">Tipo de solicitud</legend>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" asp-for="TipoSolicitud" value="@TipoSolicitud.PrimeraVez" id="ts1" />
+            <label class="form-check-label" for="ts1">Primera vez</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" asp-for="TipoSolicitud" value="@TipoSolicitud.Renovacion" id="ts2" />
+            <label class="form-check-label" for="ts2">Renovación (mi carnet venció o va a vencer)</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" asp-for="TipoSolicitud" value="@TipoSolicitud.Duplicado" id="ts3" />
+            <label class="form-check-label" for="ts3">Duplicado (pérdida, robo o deterioro) · tiene costo</label>
+        </div>
+    </fieldset>
+
+    <div class="mb-3">
+        <label asp-for="Cedula" class="form-label h5">Cédula de la persona con discapacidad</label>
+        <div class="input-group">
+            <input asp-for="Cedula" class="form-control" inputmode="numeric" aria-describedby="ayudaCedula" />
+            <button type="button" id="btnJce" class="btn btn-outline-primary">Validar con la JCE</button>
+        </div>
+        <div id="ayudaCedula" class="form-text">11 dígitos. Si es menor de edad y no tiene cédula, usa los datos del acta de nacimiento.</div>
+        <span asp-validation-for="Cedula" class="text-danger"></span>
+    </div>
+
+    <div id="resultadoJce" aria-live="polite" class="mb-3">
+        @if (Model.IdentidadValidada)
+        {
+            <div class="alert alert-success">
+                <p class="fw-semibold mb-1">Identidad validada con la Junta Central Electoral</p>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Nombre completo</dt><dd class="col-sm-8">@Model.Nombres @Model.Apellidos</dd>
+                    <dt class="col-sm-4">Fecha de nacimiento</dt><dd class="col-sm-8">@Model.FechaNacimiento?.ToString("dd/MM/yyyy")</dd>
+                </dl>
+            </div>
+        }
+    </div>
+
+    <div class="mb-4" style="max-width: 16rem;">
+        <label asp-for="Sexo" class="form-label">Sexo</label>
+        <select asp-for="Sexo" class="form-select">
+            <option value="1">Masculino</option>
+            <option value="2">Femenino</option>
+        </select>
+    </div>
+
+    <p class="small text-muted">Los datos de nombre y fecha de nacimiento vienen de la JCE y no se pueden editar aquí.
+        Si hay un error, debes corregirlo en la JCE.</p>
+
+    <div class="d-flex flex-wrap justify-content-end align-items-center gap-2 border-top pt-3">
+        <button type="submit" class="btn btn-outline-secondary" formaction="@Url.Action("GuardarYSalir")" formnovalidate>Guardar y salir</button>
+        <button type="submit" class="btn btn-primary">Continuar al paso 2</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('btnJce').addEventListener('click', async () => {
+            const salida = document.getElementById('resultadoJce');
+            const datos = new FormData();
+            datos.append('cedula', document.getElementById('Cedula').value);
+            datos.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+            salida.innerHTML = '<p>Validando con la JCE…</p>';
+
+            try {
+                const r = await fetch('@Url.Action("ValidarJce")', { method: 'POST', body: datos });
+                const j = await r.json();
+                if (j.valida) {
+                    salida.innerHTML = `<div class="alert alert-success">
+                        <p class="fw-semibold mb-1">Identidad validada con la Junta Central Electoral</p>
+                        <dl class="row mb-0">
+                          <dt class="col-sm-4">Nombre completo</dt><dd class="col-sm-8">${j.nombres} ${j.apellidos}</dd>
+                          <dt class="col-sm-4">Fecha de nacimiento</dt><dd class="col-sm-8">${j.fechaNacimiento}</dd>
+                        </dl></div>`;
+                } else if (j.servicioNoDisponible) {
+                    salida.innerHTML = '<div class="alert alert-warning">No pudimos validar tu identidad en este momento. Puedes continuar; la validaremos automáticamente y te avisaremos.</div>';
+                } else {
+                    salida.innerHTML = '<div class="alert alert-danger">La cédula no fue encontrada en la JCE. Revísala.</div>';
+                }
+            } catch {
+                salida.innerHTML = '<div class="alert alert-warning">No pudimos validar tu identidad en este momento. Puedes continuar.</div>';
+            }
+        });
+    </script>
+}
