@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CONADIS.Application\CONADIS.Application.csproj" />
     <ProjectReference Include="..\CONADIS.Infrastructure\CONADIS.Infrastructure.csproj" />
+    <ProjectReference Include="..\CONADIS.Integration\CONADIS.Integration.csproj" />
   </ItemGroup>
 
 </Project>

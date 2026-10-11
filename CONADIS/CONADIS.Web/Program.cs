@@ -1,5 +1,6 @@
 using CONADIS.Application;
 using CONADIS.Infrastructure;
+using CONADIS.Integration;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,10 +8,13 @@ var builder = WebApplication.CreateBuilder(args);
 // MVC
 builder.Services.AddControllersWithViews();
 
-// Capas del proyecto (Application + Infrastructure)
+// Capas del proyecto (Application + Infrastructure + Integration)
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(
     builder.Configuration.GetConnectionString("ConadisDb")); // null => base en memoria
+
+// Capa de Integración para APIs externas
+builder.Services.AddIntegrationServices(builder.Configuration);
 
 // Sesión: guarda el borrador del asistente de solicitud mientras no exista un servicio de borradores
 builder.Services.AddDistributedMemoryCache();
