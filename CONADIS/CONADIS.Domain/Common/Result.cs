@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CONADIS.Domain.Common;
+﻿namespace CONADIS.Domain.Common;
 
 public class Result
 {

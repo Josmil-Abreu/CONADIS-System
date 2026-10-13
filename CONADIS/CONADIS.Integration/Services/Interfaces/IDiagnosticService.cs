@@ -1,10 +1,9 @@
 namespace CONADIS.Integration.Services.Interfaces;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using CONADIS.Domain.Common;
 using CONADIS.Integration.Models.Requests;
+using System.Threading;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Servicio de orquestación de diagnósticos.

@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using CONADIS.Application.Interfaces;
 using System.Text;
-using CONADIS.Application.Interfaces;
 
 namespace CONADIS.Infrastructure.Services;
 

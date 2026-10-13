@@ -1,11 +1,10 @@
 namespace CONADIS.Integration.Mocks;
 
+using CONADIS.Integration.Models.Responses;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using CONADIS.Integration.Models.Requests;
-using CONADIS.Integration.Models.Responses;
-using Microsoft.Extensions.Logging;
 
 /// <summary>Interfaz para el servicio mock de JCE</summary>
 public interface IJceMockService

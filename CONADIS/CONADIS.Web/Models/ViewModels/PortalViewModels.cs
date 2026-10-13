@@ -1,6 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using CONADIS.Application.Dtos;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using CONADIS.Application.Dtos;
+using System.ComponentModel.DataAnnotations;
 
 namespace CONADIS.Web.Models.ViewModels;
 

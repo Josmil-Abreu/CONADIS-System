@@ -16,7 +16,7 @@ public class ExternalServiceException : Exception
 
     public ExternalServiceException(string message) : base(message) { }
 
-    public ExternalServiceException(string message, Exception innerException) 
+    public ExternalServiceException(string message, Exception innerException)
         : base(message, innerException) { }
 
     public ExternalServiceException(string message, string? errorCode, int? statusCode, string? details = null)
@@ -36,7 +36,7 @@ public class PaymentException : ExternalServiceException
 
     public PaymentException(string message) : base(message) { }
 
-    public PaymentException(string message, string transactionId) 
+    public PaymentException(string message, string transactionId)
         : base(message)
     {
         TransactionId = transactionId;

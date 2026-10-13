@@ -1,6 +1,5 @@
 namespace CONADIS.Integration.HttpClients.Interfaces;
 
-using CONADIS.Integration.Models.Requests;
 using CONADIS.Integration.Models.Responses;
 
 /// <summary>

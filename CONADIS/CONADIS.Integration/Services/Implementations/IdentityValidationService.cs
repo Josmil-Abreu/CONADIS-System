@@ -1,13 +1,13 @@
 namespace CONADIS.Integration.Services.Implementations;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using CONADIS.Domain.Common;
 using CONADIS.Integration.Exceptions;
 using CONADIS.Integration.HttpClients.Interfaces;
 using CONADIS.Integration.Services.Interfaces;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 /// <summary>Implementación del servicio de orquestación de validación de identidad</summary>
 public class IdentityValidationService : IIdentityValidationService

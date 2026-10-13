@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using CONADIS.Application.Dtos;
 using CONADIS.Domain.Common;
-using CONADIS.Application.Dtos;
 
 namespace CONADIS.Application.Interfaces;
 
