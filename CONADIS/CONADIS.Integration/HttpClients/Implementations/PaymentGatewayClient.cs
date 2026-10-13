@@ -39,7 +39,7 @@ public class PaymentGatewayClient : IPaymentGatewayClient
     {
         try
         {
-            _logger.LogInformation("Iniciando pago: TransactionId={TransactionId}, Amount={Amount}", 
+            _logger.LogInformation("Iniciando pago: TransactionId={TransactionId}, Amount={Amount}",
                 request.TransactionId, request.Amount);
 
             var endpoint = ApiEndpoints.PaymentGateway.InitiatePayment;
@@ -53,10 +53,10 @@ public class PaymentGatewayClient : IPaymentGatewayClient
                     request.TransactionId);
             }
 
-            var result = await response.Content.ReadAsAsync<PaymentResponse>(cancellationToken: ct)
+            var result = await response.Content.ReadFromJsonAsync<PaymentResponse>(cancellationToken: ct)
                 ?? throw new PaymentException("Respuesta vacía del servidor", request.TransactionId);
 
-            _logger.LogInformation("Pago iniciado exitosamente: TransactionId={TransactionId}, Status={Status}", 
+            _logger.LogInformation("Pago iniciado exitosamente: TransactionId={TransactionId}, Status={Status}",
                 result.TransactionId, result.Status);
 
             return result;
@@ -87,10 +87,10 @@ public class PaymentGatewayClient : IPaymentGatewayClient
                 throw new PaymentException($"Error al consultar estado: {response.StatusCode}", transactionId);
             }
 
-            var result = await response.Content.ReadAsAsync<PaymentStatusResponse>(cancellationToken: ct)
+            var result = await response.Content.ReadFromJsonAsync<PaymentStatusResponse>(cancellationToken: ct)
                 ?? throw new PaymentException("Respuesta vacía del servidor", transactionId);
 
-            _logger.LogInformation("Estado de pago obtenido: TransactionId={TransactionId}, Status={Status}", 
+            _logger.LogInformation("Estado de pago obtenido: TransactionId={TransactionId}, Status={Status}",
                 result.TransactionId, result.Status);
 
             return result;
@@ -106,7 +106,7 @@ public class PaymentGatewayClient : IPaymentGatewayClient
     {
         try
         {
-            _logger.LogInformation("Procesando reembolso: TransactionId={TransactionId}, Amount={Amount}", 
+            _logger.LogInformation("Procesando reembolso: TransactionId={TransactionId}, Amount={Amount}",
                 transactionId, amount);
 
             var endpoint = ApiEndpoints.PaymentGateway.RefundPayment.Replace("{transactionId}", transactionId);
@@ -118,10 +118,10 @@ public class PaymentGatewayClient : IPaymentGatewayClient
                 throw new PaymentException($"Error al procesar reembolso: {response.StatusCode}", transactionId);
             }
 
-            var result = await response.Content.ReadAsAsync<PaymentResponse>(cancellationToken: ct)
+            var result = await response.Content.ReadFromJsonAsync<PaymentResponse>(cancellationToken: ct)
                 ?? throw new PaymentException("Respuesta vacía del servidor", transactionId);
 
-            _logger.LogInformation("Reembolso procesado: TransactionId={TransactionId}, Status={Status}", 
+            _logger.LogInformation("Reembolso procesado: TransactionId={TransactionId}, Status={Status}",
                 result.TransactionId, result.Status);
 
             return result;

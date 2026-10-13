@@ -58,7 +58,7 @@ public static class DependencyInjection
             .WaitAndRetryAsync(
                 retryCount: 3,
                 sleepDurationProvider: retryAttempt =>
-                    TimeSpan.FromMilliseconds(100 * Math.Pow(2, retryAttempt - 1)),
+                    TimeSpan.FromMilliseconds(100 * Math.Pow(2, retryAttempt)),
                 onRetry: (outcome, timespan, retryCount, context) =>
                 {
                     // Log del reintento
@@ -74,6 +74,10 @@ public static class DependencyInjection
                 onBreak: (outcome, timespan) =>
                 {
                     Console.WriteLine($"Circuit breaker abierto por {timespan.TotalSeconds}s");
+                },
+                onReset: () =>
+                {
+                    Console.WriteLine("Circuit breaker restablecido.");
                 });
 
         // Combinar políticas

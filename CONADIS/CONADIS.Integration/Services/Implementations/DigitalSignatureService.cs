@@ -34,9 +34,7 @@ public class DigitalSignatureService : IDigitalSignatureService
 
             if (!response.Success)
             {
-                return Result<string>.Failure(
-                    $"Error al firmar: {response.ErrorMessage}",
-                    "SIGNATURE_FAILED");
+                return Result<string>.Failure($"[SIGNATURE_FAILED] Error al firmar: {response.ErrorMessage}");
             }
 
             return Result<string>.Success(response.SignatureData);
@@ -44,12 +42,13 @@ public class DigitalSignatureService : IDigitalSignatureService
         catch (SignatureException ex)
         {
             _logger.LogError(ex, "Error al firmar documento");
-            return Result<string>.Failure(ex.Message, ex.ErrorCode ?? "SIGNATURE_ERROR");
+            var code = ex.ErrorCode ?? "SIGNATURE_ERROR";
+            return Result<string>.Failure($"[{code}] {ex.Message}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error inesperado al firmar documento");
-            return Result<string>.Failure("Error inesperado al firmar", "UNKNOWN_ERROR");
+            return Result<string>.Failure("[UNKNOWN_ERROR] Error inesperado al firmar");
         }
     }
 
@@ -66,7 +65,8 @@ public class DigitalSignatureService : IDigitalSignatureService
         catch (SignatureException ex)
         {
             _logger.LogError(ex, "Error al validar firma");
-            return Result<bool>.Failure(ex.Message, ex.ErrorCode ?? "VALIDATION_ERROR");
+            var code = ex.ErrorCode ?? "VALIDATION_ERROR";
+            return Result<bool>.Failure($"[{code}] {ex.Message}");
         }
     }
 
@@ -80,7 +80,7 @@ public class DigitalSignatureService : IDigitalSignatureService
 
             if (!response.IsActive)
             {
-                return Result<string>.Failure("Certificado no activo", "INACTIVE_CERTIFICATE");
+                return Result<string>.Failure("[INACTIVE_CERTIFICATE] Certificado no activo");
             }
 
             return Result<string>.Success($"Certificado activo hasta {response.ExpiresAt:yyyy-MM-dd}");
@@ -88,7 +88,8 @@ public class DigitalSignatureService : IDigitalSignatureService
         catch (SignatureException ex)
         {
             _logger.LogError(ex, "Error al obtener estado del certificado");
-            return Result<string>.Failure(ex.Message, ex.ErrorCode ?? "CERTIFICATE_ERROR");
+            var code = ex.ErrorCode ?? "CERTIFICATE_ERROR";
+            return Result<string>.Failure($"[{code}] {ex.Message}");
         }
     }
 }

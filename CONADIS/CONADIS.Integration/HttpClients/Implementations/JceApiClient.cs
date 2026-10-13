@@ -48,9 +48,9 @@ public class JceApiClient : IJceApiClient
                 if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
                     _logger.LogWarning("Cédula no encontrada en JCE: {Cedula}", cedula);
-                    return new JceValidationResponse 
-                    { 
-                        IsValid = false, 
+                    return new JceValidationResponse
+                    {
+                        IsValid = false,
                         Cedula = cedula,
                         ErrorMessage = "Cédula no encontrada"
                     };
@@ -61,10 +61,10 @@ public class JceApiClient : IJceApiClient
                     cedula);
             }
 
-            var result = await response.Content.ReadAsAsync<JceValidationResponse>(cancellationToken: ct)
+            var result = await response.Content.ReadFromJsonAsync<JceValidationResponse>(cancellationToken: ct)
                 ?? throw new IdentityValidationException("Respuesta vacía del servidor", cedula);
 
-            _logger.LogInformation("Validación completada: Cedula={Cedula}, IsValid={IsValid}", 
+            _logger.LogInformation("Validación completada: Cedula={Cedula}, IsValid={IsValid}",
                 cedula, result.IsValid);
 
             return result;
@@ -97,10 +97,10 @@ public class JceApiClient : IJceApiClient
                     cedula);
             }
 
-            var result = await response.Content.ReadAsAsync<JceCitizenInfoResponse>(cancellationToken: ct)
+            var result = await response.Content.ReadFromJsonAsync<JceCitizenInfoResponse>(cancellationToken: ct)
                 ?? throw new IdentityValidationException("Respuesta vacía del servidor", cedula);
 
-            _logger.LogInformation("Información obtenida: Cedula={Cedula}, FullName={FullName}", 
+            _logger.LogInformation("Información obtenida: Cedula={Cedula}, FullName={FullName}",
                 cedula, result.FullName);
 
             return result;
@@ -128,10 +128,10 @@ public class JceApiClient : IJceApiClient
                     cedula);
             }
 
-            var result = await response.Content.ReadAsAsync<JceElectoralStatusResponse>(cancellationToken: ct)
+            var result = await response.Content.ReadFromJsonAsync<JceElectoralStatusResponse>(cancellationToken: ct)
                 ?? throw new IdentityValidationException("Respuesta vacía del servidor", cedula);
 
-            _logger.LogInformation("Estado electoral obtenido: Cedula={Cedula}, Status={Status}", 
+            _logger.LogInformation("Estado electoral obtenido: Cedula={Cedula}, Status={Status}",
                 cedula, result.Status);
 
             return result;

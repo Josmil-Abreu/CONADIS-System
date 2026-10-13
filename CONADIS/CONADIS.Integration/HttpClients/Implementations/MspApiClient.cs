@@ -38,7 +38,7 @@ public class MspApiClient : IMspApiClient
     {
         try
         {
-            _logger.LogInformation("Solicitando diagnóstico al MSP para paciente: {PatientCedula}", 
+            _logger.LogInformation("Solicitando diagnóstico al MSP para paciente: {PatientCedula}",
                 request.PatientCedula);
 
             var endpoint = ApiEndpoints.Msp.RequestDiagnostic;
@@ -51,10 +51,10 @@ public class MspApiClient : IMspApiClient
                     request.PatientCedula);
             }
 
-            var result = await response.Content.ReadAsAsync<MspDiagnosticResponse>(cancellationToken: ct)
+            var result = await response.Content.ReadFromJsonAsync<MspDiagnosticResponse>(cancellationToken: ct)
                 ?? throw new DiagnosticException("Respuesta vacía del servidor", request.PatientCedula);
 
-            _logger.LogInformation("Diagnóstico solicitado exitosamente: RequestId={RequestId}, Status={Status}", 
+            _logger.LogInformation("Diagnóstico solicitado exitosamente: RequestId={RequestId}, Status={Status}",
                 result.RequestId, result.Status);
 
             return result;
@@ -85,10 +85,10 @@ public class MspApiClient : IMspApiClient
                 throw new DiagnosticException($"Error al consultar estado: {response.StatusCode}", requestId);
             }
 
-            var result = await response.Content.ReadAsAsync<MspDiagnosticStatusResponse>(cancellationToken: ct)
+            var result = await response.Content.ReadFromJsonAsync<MspDiagnosticStatusResponse>(cancellationToken: ct)
                 ?? throw new DiagnosticException("Respuesta vacía del servidor", requestId);
 
-            _logger.LogInformation("Estado de diagnóstico obtenido: RequestId={RequestId}, Status={Status}", 
+            _logger.LogInformation("Estado de diagnóstico obtenido: RequestId={RequestId}, Status={Status}",
                 result.RequestId, result.Status);
 
             return result;
@@ -114,10 +114,10 @@ public class MspApiClient : IMspApiClient
                 throw new DiagnosticException($"Error al obtener certificado: {response.StatusCode}", certificateId);
             }
 
-            var result = await response.Content.ReadAsAsync<MspCertificateResponse>(cancellationToken: ct)
+            var result = await response.Content.ReadFromJsonAsync<MspCertificateResponse>(cancellationToken: ct)
                 ?? throw new DiagnosticException("Respuesta vacía del servidor", certificateId);
 
-            _logger.LogInformation("Certificado obtenido: CertificateId={CertificateId}, PatientCedula={PatientCedula}", 
+            _logger.LogInformation("Certificado obtenido: CertificateId={CertificateId}, PatientCedula={PatientCedula}",
                 certificateId, result.PatientCedula);
 
             return result;

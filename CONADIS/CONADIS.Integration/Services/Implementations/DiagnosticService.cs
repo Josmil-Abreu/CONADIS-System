@@ -34,9 +34,8 @@ public class DiagnosticService : IDiagnosticService
 
             if (string.IsNullOrEmpty(response.RequestId))
             {
-                return Result<string>.Failure(
-                    response.ErrorMessage ?? "Error al solicitar diagnóstico",
-                    "REQUEST_FAILED");
+                var errorMsg = response.ErrorMessage ?? "Error al solicitar diagnóstico";
+                return Result<string>.Failure($"[REQUEST_FAILED] {errorMsg}");
             }
 
             return Result<string>.Success(response.RequestId);
@@ -44,12 +43,13 @@ public class DiagnosticService : IDiagnosticService
         catch (DiagnosticException ex)
         {
             _logger.LogError(ex, "Error al solicitar diagnóstico");
-            return Result<string>.Failure(ex.Message, ex.ErrorCode ?? "DIAGNOSTIC_ERROR");
+            var code = ex.ErrorCode ?? "DIAGNOSTIC_ERROR";
+            return Result<string>.Failure($"[{code}] {ex.Message}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error inesperado al solicitar diagnóstico");
-            return Result<string>.Failure("Error inesperado al solicitar diagnóstico", "UNKNOWN_ERROR");
+            return Result<string>.Failure("[UNKNOWN_ERROR] Error inesperado al solicitar diagnóstico");
         }
     }
 
@@ -67,7 +67,8 @@ public class DiagnosticService : IDiagnosticService
         catch (DiagnosticException ex)
         {
             _logger.LogError(ex, "Error al consultar estado del diagnóstico");
-            return Result<string>.Failure(ex.Message, ex.ErrorCode ?? "STATUS_ERROR");
+            var code = ex.ErrorCode ?? "STATUS_ERROR";
+            return Result<string>.Failure($"[{code}] {ex.Message}");
         }
     }
 
@@ -80,12 +81,13 @@ public class DiagnosticService : IDiagnosticService
             var response = await _client.GetCertificateAsync(certificateId, ct);
 
             return Result<string>.Success(
-                $"Certificado: {response.PatientName} - Vigencia hasta: {response.ValidUntil?.ToString("yyyy-MM-dd")}");
+                $"Certificado: {response.PatientName} Vigencia hasta: {response.ValidUntil?.ToString("yyyy-MM-dd")}");
         }
         catch (DiagnosticException ex)
         {
             _logger.LogError(ex, "Error al obtener certificado");
-            return Result<string>.Failure(ex.Message, ex.ErrorCode ?? "CERTIFICATE_ERROR");
+            var code = ex.ErrorCode ?? "CERTIFICATE_ERROR";
+            return Result<string>.Failure($"[{code}] {ex.Message}");
         }
     }
 }

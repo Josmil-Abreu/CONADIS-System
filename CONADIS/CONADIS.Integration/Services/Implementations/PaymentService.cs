@@ -34,9 +34,7 @@ public class PaymentService : IPaymentService
 
             if (!response.Success)
             {
-                return Result<string>.Failure(
-                    $"Error en pago: {response.ErrorMessage}",
-                    "PAYMENT_FAILED");
+                return Result<string>.Failure($"[PAYMENT_FAILED] Error en pago: {response.ErrorMessage}");
             }
 
             return Result<string>.Success(response.TransactionId);
@@ -44,12 +42,13 @@ public class PaymentService : IPaymentService
         catch (PaymentException ex)
         {
             _logger.LogError(ex, "Error al procesar pago: {TransactionId}", payment.TransactionId);
-            return Result<string>.Failure(ex.Message, ex.ErrorCode ?? "PAYMENT_ERROR");
+            var code = ex.ErrorCode ?? "PAYMENT_ERROR";
+            return Result<string>.Failure($"[{code}] {ex.Message}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error inesperado al procesar pago");
-            return Result<string>.Failure("Error inesperado al procesar el pago", "UNKNOWN_ERROR");
+            return Result<string>.Failure("[UNKNOWN_ERROR] Error inesperado al procesar el pago");
         }
     }
 
@@ -66,7 +65,8 @@ public class PaymentService : IPaymentService
         catch (PaymentException ex)
         {
             _logger.LogError(ex, "Error al consultar estado de pago");
-            return Result<string>.Failure(ex.Message, ex.ErrorCode ?? "STATUS_ERROR");
+            var code = ex.ErrorCode ?? "STATUS_ERROR";
+            return Result<string>.Failure($"[{code}] {ex.Message}");
         }
     }
 
@@ -80,9 +80,7 @@ public class PaymentService : IPaymentService
 
             if (!response.Success)
             {
-                return Result<string>.Failure(
-                    $"Error en reembolso: {response.ErrorMessage}",
-                    "REFUND_FAILED");
+                return Result<string>.Failure($"[REFUND_FAILED] Error en reembolso: {response.ErrorMessage}");
             }
 
             return Result<string>.Success(response.TransactionId);
@@ -90,7 +88,8 @@ public class PaymentService : IPaymentService
         catch (PaymentException ex)
         {
             _logger.LogError(ex, "Error al reembolsar pago");
-            return Result<string>.Failure(ex.Message, ex.ErrorCode ?? "REFUND_ERROR");
+            var code = ex.ErrorCode ?? "REFUND_ERROR";
+            return Result<string>.Failure($"[{code}] {ex.Message}");
         }
     }
 }

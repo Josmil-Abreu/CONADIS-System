@@ -50,7 +50,7 @@ public class DigitalSignatureClient : IDigitalSignatureClient
                     request.CertificateId);
             }
 
-            var result = await response.Content.ReadAsAsync<SignatureResponse>(cancellationToken: ct)
+            var result = await response.Content.ReadFromJsonAsync<SignatureResponse>(cancellationToken: ct)
                 ?? throw new SignatureException("Respuesta vacía del servidor", request.CertificateId);
 
             _logger.LogInformation("Firma generada exitosamente: Formato={SignatureFormat}", result.SignatureFormat);
@@ -84,7 +84,7 @@ public class DigitalSignatureClient : IDigitalSignatureClient
                 throw new SignatureException($"Error al validar firma: {response.StatusCode}");
             }
 
-            var result = await response.Content.ReadAsAsync<SignatureValidationResponse>(cancellationToken: ct)
+            var result = await response.Content.ReadFromJsonAsync<SignatureValidationResponse>(cancellationToken: ct)
                 ?? throw new SignatureException("Respuesta vacía del servidor");
 
             _logger.LogInformation("Validación completada: IsValid={IsValid}", result.IsValid);
@@ -112,10 +112,10 @@ public class DigitalSignatureClient : IDigitalSignatureClient
                 throw new SignatureException($"Error al obtener info del certificado: {response.StatusCode}");
             }
 
-            var result = await response.Content.ReadAsAsync<CertificateResponse>(cancellationToken: ct)
+            var result = await response.Content.ReadFromJsonAsync<CertificateResponse>(cancellationToken: ct)
                 ?? throw new SignatureException("Respuesta vacía del servidor");
 
-            _logger.LogInformation("Información del certificado obtenida: ID={CertificateId}, IsActive={IsActive}", 
+            _logger.LogInformation("Información del certificado obtenida: ID={CertificateId}, IsActive={IsActive}",
                 result.CertificateId, result.IsActive);
 
             return result;

@@ -33,9 +33,8 @@ public class IdentityValidationService : IIdentityValidationService
 
             if (!response.IsValid)
             {
-                return Result<bool>.Failure(
-                    response.ErrorMessage ?? "Cédula no válida",
-                    "INVALID_CEDULA");
+                var errorMsg = response.ErrorMessage ?? "Cédula no válida";
+                return Result<bool>.Failure($"[INVALID_CEDULA] {errorMsg}");
             }
 
             return Result<bool>.Success(true);
@@ -43,12 +42,13 @@ public class IdentityValidationService : IIdentityValidationService
         catch (IdentityValidationException ex)
         {
             _logger.LogError(ex, "Error al validar cédula");
-            return Result<bool>.Failure(ex.Message, ex.ErrorCode ?? "VALIDATION_ERROR");
+            var code = ex.ErrorCode ?? "VALIDATION_ERROR";
+            return Result<bool>.Failure($"[{code}] {ex.Message}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error inesperado al validar cédula");
-            return Result<bool>.Failure("Error inesperado al validar identidad", "UNKNOWN_ERROR");
+            return Result<bool>.Failure("[UNKNOWN_ERROR] Error inesperado al validar identidad");
         }
     }
 
@@ -61,12 +61,13 @@ public class IdentityValidationService : IIdentityValidationService
             var response = await _client.GetCitizenInfoAsync(cedula, ct);
 
             return Result<string>.Success(
-                $"{response.FullName} - {response.DateOfBirth?.ToString("yyyy-MM-dd")}");
+                $"{response.FullName} - Fecha de Nacimiento: {response.DateOfBirth?.ToString("yyyy-MM-dd")}");
         }
         catch (IdentityValidationException ex)
         {
             _logger.LogError(ex, "Error al obtener información del ciudadano");
-            return Result<string>.Failure(ex.Message, ex.ErrorCode ?? "INFO_ERROR");
+            var code = ex.ErrorCode ?? "INFO_ERROR";
+            return Result<string>.Failure($"[{code}] {ex.Message}");
         }
     }
 
@@ -80,9 +81,7 @@ public class IdentityValidationService : IIdentityValidationService
 
             if (!response.CanVote)
             {
-                return Result<bool>.Failure(
-                    $"No puede votar - Estado: {response.Status}",
-                    "CANNOT_VOTE");
+                return Result<bool>.Failure($"[CANNOT_VOTE] No puede votar - Estado: {response.Status}");
             }
 
             return Result<bool>.Success(true);
@@ -90,7 +89,8 @@ public class IdentityValidationService : IIdentityValidationService
         catch (IdentityValidationException ex)
         {
             _logger.LogError(ex, "Error al verificar estado electoral");
-            return Result<bool>.Failure(ex.Message, ex.ErrorCode ?? "ELECTORAL_ERROR");
+            var code = ex.ErrorCode ?? "ELECTORAL_ERROR";
+            return Result<bool>.Failure($"[{code}] {ex.Message}");
         }
     }
 }
