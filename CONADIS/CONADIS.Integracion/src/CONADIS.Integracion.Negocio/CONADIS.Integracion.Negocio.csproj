@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CONADIS.Integracion.Negocio: toda la lógica de la capa de Integración (SND).
+      - Datos:        acceso a CONADIS_IntegracionDB SOLO por procedimientos almacenados (EjecutorSp).
+      - Logging:      Log4Net a archivo y a la tabla dbo.Log4NetLog (vía dbo.ppLog_Insertar).
+      - Seguridad:    API keys de los clientes (WEB, CAJA).
+      - Contratos:    los objetos que viajan entre Integración y los demás módulos.
+      - Simuladores:  JCE, MSP, DGII, firma digital, pasarela de pagos y Core.
+      - Servicios:    resiliencia (cortacircuito + caché), cola, pagos, idempotencia, reportes.
+    La usan CONADIS.Integracion.Api (paso 3) y CONADIS.Integracion.Worker (paso 4).
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CONADIS.Integracion.Negocio</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="log4net" Version="3.5.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
+    <!-- SqlClient trae la 9.0.18, que tiene vulnerabilidades conocidas: se fuerza la corregida -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Se copia junto al ejecutable de quien use esta librería (API, Worker, pruebas) -->
+    <None Update="log4net.config" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="CONADIS.Integracion.Pruebas" />
+  </ItemGroup>
+
+</Project>

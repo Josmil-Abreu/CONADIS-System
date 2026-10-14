@@ -23,6 +23,22 @@
     <Project Path="CONADIS.Infrastructure/CONADIS.Infrastructure.csproj" Id="87146db7-99fd-416c-b55d-dd572240168a" />
     <Project Path="CONADIS.Integration/CONADIS.Integration.csproj" />
   </Folder>
+  <Folder Name="/Integracion/">
+    <Project Path="CONADIS.Integracion/src/CONADIS.Integracion.Negocio/CONADIS.Integracion.Negocio.csproj" />
+    <Project Path="CONADIS.Integracion/tests/CONADIS.Integracion.Pruebas/CONADIS.Integracion.Pruebas.csproj" />
+  </Folder>
+  <Folder Name="/Integracion/BaseDatos/">
+    <File Path="CONADIS.Integracion/BaseDatos/01_CrearBaseDatos.sql" />
+    <File Path="CONADIS.Integracion/BaseDatos/02_Tablas.sql" />
+    <File Path="CONADIS.Integracion/BaseDatos/03_Procedimientos_Seguridad_Log.sql" />
+    <File Path="CONADIS.Integracion/BaseDatos/04_Procedimientos_Cola.sql" />
+    <File Path="CONADIS.Integracion/BaseDatos/05_Procedimientos_Pagos_Idempotencia.sql" />
+    <File Path="CONADIS.Integracion/BaseDatos/06_Procedimientos_Servicios_Cache_Bitacora.sql" />
+    <File Path="CONADIS.Integracion/BaseDatos/07_Procedimientos_Reportes.sql" />
+    <File Path="CONADIS.Integracion/BaseDatos/08_DatosIniciales.sql" />
+    <File Path="CONADIS.Integracion/BaseDatos/09_PermisosAplicacion.sql" />
+    <File Path="CONADIS.Integracion/BaseDatos/99_PruebaFlujoCompleto.sql" />
+  </Folder>
   <Folder Name="/Presentacion/">
     <Project Path="CONADIS.Web/CONADIS.Web.csproj" Id="2072f918-a71d-4618-ad4e-8b8cd9d69f1b" />
   </Folder>
