@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Simula actividad real contra la API de Integración con las claves de demostración del README.
   Llena: bitácora y logs de Integración, pagos recibidos/aplicados (y por tanto "Pagos" del Core),

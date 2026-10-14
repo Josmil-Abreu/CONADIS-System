@@ -21,7 +21,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="log4net" Version="3.1.0" />
+    <PackageReference Include="log4net" Version="3.5.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
@@ -30,7 +30,7 @@
     <PackageReference Include="ReportViewerCore.NETCore" Version="15.1.22" />
     <!-- ReportViewerCore trae versiones viejas con avisos de seguridad (NU1902/NU1903): se fijan las corregidas -->
     <PackageReference Include="System.IO.Packaging" Version="10.0.0" />
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.0" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
   </ItemGroup>
 
   <ItemGroup>

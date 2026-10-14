@@ -7,6 +7,9 @@ REM  Requisitos: bases de datos creadas y "dotnet dev-certs https --trust".
 REM ==========================================================================
 cd /d "%~dp0"
 
+REM Si quedó algún programa de una ejecución anterior ocupando los puertos, se cierra primero.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0liberar-puertos.ps1"
+
 echo Compilando las 4 soluciones...
 dotnet build CONADIS.Core\CONADIS.Core.slnx -v q -nologo || goto error
 dotnet build CONADIS.Integracion\CONADIS.Integracion.slnx -v q -nologo || goto error
