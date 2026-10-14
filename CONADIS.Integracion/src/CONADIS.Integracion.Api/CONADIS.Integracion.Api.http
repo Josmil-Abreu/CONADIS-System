@@ -1,0 +1,96 @@
+# Peticiones de prueba del SND (Integración). Arranque primero el Core (7101) y luego esta API (7102).
+# En Visual Studio pulse "Enviar solicitud" encima de cada petición.
+
+@base = https://localhost:7102
+@web = conadis-web-demo-2026
+@caja = conadis-caja-demo-2026
+@core = conadis-core-demo-2026
+@institucion = institucion-demo-2026
+@vencida = institucion-vencida-2026
+@cedula = 40123456788
+
+### 1) Salud (sin clave): base de datos, Core y cortacircuitos
+GET {{base}}/api/v1/salud
+
+### 2) Portal: validar una cédula con la JCE (simulada)
+GET {{base}}/api/v1/portal/identidad/{{cedula}}
+X-Api-Key: {{web}}
+
+### 3) Portal: solicitud de certificación (Integración valida JCE y MSP antes de enviarla al Core)
+POST {{base}}/api/v1/portal/solicitudes
+X-Api-Key: {{web}}
+X-Usuario-Final: ciudadano:{{cedula}}
+Idempotency-Key: solicitud-demo-001
+Content-Type: application/json
+
+{
+  "canal": "Web",
+  "tipo": "Certificacion",
+  "cedulaCuenta": "{{cedula}}",
+  "cedula": "{{cedula}}",
+  "nombres": "Declarado",
+  "apellidos": "Por El Ciudadano",
+  "estadoIdentidad": "Pendiente",
+  "correo": "ciudadano@correo.do",
+  "establecimiento": "Hospital Dr. Darío Contreras",
+  "numeroCertificadoMedico": "CERT-2026-0001",
+  "codigoCie10": "G80",
+  "consentimientoDatos": true
+}
+
+### 4) Portal: mis trámites
+GET {{base}}/api/v1/portal/ciudadanos/{{cedula}}/tramites
+X-Api-Key: {{web}}
+
+### 5) Caja: tasas
+GET {{base}}/api/v1/caja/tasas
+X-Api-Key: {{caja}}
+
+### 6) Caja: cobro (envíelo dos veces: la segunda responde esNuevo = false)
+POST {{base}}/api/v1/caja/pagos
+X-Api-Key: {{caja}}
+X-Usuario-Final: cajero:demo
+Content-Type: application/json
+
+{
+  "transaccionId": "6f9619ff-8b86-d011-b42d-00c04fc964ff",
+  "origen": "CAJA",
+  "numeroComprobante": "E320000000101",
+  "tasaCodigo": "COPIA-CERT",
+  "cantidad": 1,
+  "total": 300,
+  "medioPago": "Efectivo",
+  "documento": "{{cedula}}",
+  "nombrePagador": "Pagador Demostración",
+  "numeroOrden": null,
+  "referencia": null,
+  "caja": "CAJA-01",
+  "cajero": "demo",
+  "fechaPago": "2026-10-14T10:00:00-04:00"
+}
+
+### 7) Caja: estado del cobro (Recibido -> Aplicado cuando el servicio de Windows lo entrega al Core)
+GET {{base}}/api/v1/caja/pagos/6f9619ff-8b86-d011-b42d-00c04fc964ff
+X-Api-Key: {{caja}}
+
+### 8) Caja: enviar un e-CF a la DGII
+POST {{base}}/api/v1/caja/ecf
+X-Api-Key: {{caja}}
+Content-Type: application/json
+
+{ "encf": "E320000000101", "tipoEcf": "32", "rncEmisor": "401000001", "documentoComprador": null, "total": 300, "itbis": 0, "fechaEmision": "2026-10-14T10:00:00-04:00" }
+
+### 9) Core: pedir una firma digital
+POST {{base}}/api/v1/firma
+X-Api-Key: {{core}}
+Content-Type: application/json
+
+{ "contenido": "CONADIS|CARNET|1|codigo-de-prueba" }
+
+### 10) Institución con convenio: ¿tiene certificación vigente?
+GET {{base}}/api/v1/verificacion/condicion/{{cedula}}?proposito=Beneficio%20de%20transporte
+X-Api-Key: {{institucion}}
+
+### 11) Institución con convenio vencido -> 403
+GET {{base}}/api/v1/verificacion/condicion/{{cedula}}?proposito=Beneficio%20de%20transporte
+X-Api-Key: {{vencida}}

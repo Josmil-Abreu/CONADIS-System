@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\CONADIS.Integracion.Api\CONADIS.Integracion.Api.csproj" />
     <ProjectReference Include="..\..\src\CONADIS.Integracion.Negocio\CONADIS.Integracion.Negocio.csproj" />
   </ItemGroup>
 
