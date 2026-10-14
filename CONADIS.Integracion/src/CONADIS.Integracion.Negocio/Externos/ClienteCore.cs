@@ -43,7 +43,7 @@ public sealed class ClienteCore(HttpClient http)
         }
         catch (HttpRequestException ex)
         {
-            throw new CoreNoDisponibleException("No se pudo conectar con el Core.", ex);
+            throw new CoreNoDisponibleException($"No se pudo conectar con el Core ({http.BaseAddress}): {Causa(ex)}", ex);
         }
 
         using (respuesta)
@@ -86,5 +86,13 @@ public sealed class ClienteCore(HttpClient http)
     {
         if (!r.EsExito) throw new InvalidOperationException($"El Core respondió {r.Estado} a {operacion}: {r.Cuerpo}");
         return r.Leer<T>() ?? throw new InvalidOperationException($"El Core devolvió una respuesta vacía a {operacion}.");
+    }
+
+    /// <summary>Mensaje de la excepción más interna (p. ej. el error de certificado SSL o "conexión denegada").</summary>
+    private static string Causa(Exception ex)
+    {
+        var e = ex;
+        while (e.InnerException is not null) e = e.InnerException;
+        return e == ex ? ex.Message : $"{ex.Message} -> {e.Message}";
     }
 }
