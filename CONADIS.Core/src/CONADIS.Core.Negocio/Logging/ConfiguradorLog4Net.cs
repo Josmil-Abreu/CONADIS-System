@@ -25,6 +25,8 @@ public static class ConfiguradorLog4Net
 
         // Disponible en el patrón de log4net.config como %property{aplicacion}
         GlobalContext.Properties["aplicacion"] = aplicacion;
+        // Valor por defecto cuando el log no viene de una petición HTTP (procesos, pruebas)
+        GlobalContext.Properties["correlacion"] = "-";
 
         var repositorio = LogManager.GetRepository(Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly());
         XmlConfigurator.Configure(repositorio, archivo);

@@ -1,0 +1,95 @@
+﻿# Peticiones de prueba de la API del Core.
+# En Visual Studio: arranca la API (F5) y pulsa "Send request" encima de cada petición.
+# 40123456788 es una cédula de demostración con dígito verificador válido.
+
+@base = https://localhost:7101
+@clave = conadis-integracion-demo-2026
+@cedula = 40123456788
+
+### 1) Salud (no pide clave)
+GET {{base}}/api/v1/salud
+
+### 2) Sin clave -> 401
+GET {{base}}/api/v1/catalogos/centros
+
+### 3) Centros de valoración
+GET {{base}}/api/v1/catalogos/centros
+X-Api-Key: {{clave}}
+
+### 4) Cupos del centro 1 en los próximos 10 días
+GET {{base}}/api/v1/catalogos/centros/1/disponibilidad?dias=10
+X-Api-Key: {{clave}}
+
+### 5) Tasas
+GET {{base}}/api/v1/catalogos/tasas
+X-Api-Key: {{clave}}
+
+### 6) Solicitud desde el portal (enviarla dos veces -> 422: ya tiene una solicitud activa)
+POST {{base}}/api/v1/solicitudes
+X-Api-Key: {{clave}}
+X-Usuario-Final: ciudadano:{{cedula}}
+Content-Type: application/json
+
+{
+  "canal": "Web",
+  "tipo": "Certificacion",
+  "cedulaCuenta": "{{cedula}}",
+  "cedula": "{{cedula}}",
+  "nombres": "María",
+  "apellidos": "Demostración API",
+  "fechaNacimiento": "1985-03-20",
+  "sexo": 2,
+  "estadoIdentidad": "Validada",
+  "correo": "maria.demo@correo.do",
+  "provincia": "Santo Domingo",
+  "estadoDiagnostico": "Validado",
+  "codigoCie10": "G80",
+  "consentimientoDatos": true
+}
+
+### 7) Mis trámites
+GET {{base}}/api/v1/ciudadanos/{{cedula}}/tramites
+X-Api-Key: {{clave}}
+
+### 8) Detalle de un trámite (cambia TRA-2026-... por el número que devolvió el paso 6)
+GET {{base}}/api/v1/ciudadanos/{{cedula}}/tramites/TRA-2026-0000001
+X-Api-Key: {{clave}}
+
+### 9) Orden de cobro: 2 copias de certificado
+POST {{base}}/api/v1/ordenes
+X-Api-Key: {{clave}}
+Content-Type: application/json
+
+{ "tasaCodigo": "COPIA-CERT", "cantidad": 2, "documento": "{{cedula}}", "nombrePagador": "María Demostración", "referencia": null }
+
+### 10) Pago (envíalo dos veces: la segunda responde "Duplicado").
+# Cambia numeroOrden por el que devolvió el paso 9.
+POST {{base}}/api/v1/pagos
+X-Api-Key: {{clave}}
+X-Usuario-Final: cajero:demo
+Content-Type: application/json
+
+{
+  "transaccionId": "3f2504e0-4f89-11d3-9a0c-0305e82c3301",
+  "origen": "CAJA",
+  "numeroComprobante": "E320000000099",
+  "tasaCodigo": "COPIA-CERT",
+  "cantidad": 2,
+  "total": 600,
+  "medioPago": "Efectivo",
+  "documento": "{{cedula}}",
+  "nombrePagador": "María Demostración",
+  "numeroOrden": "OC-2026-0000001",
+  "referencia": null,
+  "caja": "CAJA-01",
+  "cajero": "demo",
+  "fechaPago": "2026-10-14T10:00:00-04:00"
+}
+
+### 11) Verificación pública de un código inexistente -> NoEncontrado
+GET {{base}}/api/v1/verificacion/carnets/codigo-que-no-existe
+X-Api-Key: {{clave}}
+
+### 12) Notificaciones en cola
+GET {{base}}/api/v1/procesos/notificaciones?maximo=5
+X-Api-Key: {{clave}}
