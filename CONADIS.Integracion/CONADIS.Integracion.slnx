@@ -9,4 +9,10 @@
     <File Path="BaseDatos/07_PermisosAplicacion.sql" />
     <File Path="BaseDatos/99_PruebaIntegracion.sql" />
   </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/CONADIS.Integracion.Negocio/CONADIS.Integracion.Negocio.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/CONADIS.Integracion.Pruebas/CONADIS.Integracion.Pruebas.csproj" />
+  </Folder>
 </Solution>

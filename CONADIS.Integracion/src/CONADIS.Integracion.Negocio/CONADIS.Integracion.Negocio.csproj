@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CONADIS.Integracion.Negocio: lógica del módulo de Integración (el SND).
+      Datos/        -> acceso a SQL Server solo con Stored Procedures (copia de la del Core)
+      Logging/      -> Log4Net (archivo + tabla Log4NetLog)
+      Seguridad/    -> API keys, huellas HMAC de cédulas, contraseñas de operadores
+      Modelos/      -> objetos que devuelven los repositorios y servicios
+      Repositorios/ -> un repositorio por tabla de la base CONADIS_IntegracionDB
+      Resiliencia/  -> reintentos, tiempo de espera, cortacircuito y bitácora (RIC-06)
+      Externos/     -> adaptadores (simulados) de JCE, MSP, DGII, firma, pasarela y correo
+      Servicios/    -> casos de uso: identidad, diagnóstico, firma, verificación, portal, pagos, cola
+    No referencia ningún proyecto del Core: se comunica con él solo por su API REST (ClienteCore).
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CONADIS.Integracion.Negocio</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="log4net" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="CONADIS.Integracion.Pruebas" />
+  </ItemGroup>
+
+</Project>
