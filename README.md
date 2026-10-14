@@ -144,6 +144,11 @@ el aviso y la repite).
 
 En cada solución: *Prueba → Ejecutar todas las pruebas*. Las clases cuyo nombre contiene `BaseDatos` necesitan que los scripts del paso 1 se hayan ejecutado. La cadena de conexión se puede cambiar con estas variables de entorno: `CONADIS_WEB_PRUEBAS`, `CONADIS_CAJA_PRUEBAS`, etc.
 
+## 10b. Datos de demostración
+
+Para llenar las pestañas de Caja y Core sin hacerlo todo a mano: `CONADIS.Caja/BaseDatos/98_DatosDemo.sql` (cobros, nota de crédito y cierres),
+`demo/simular-actividad.ps1` (actividad por la API de Integración) y la guía `demo/DEMO-DATOS.md`.
+
 ## 10. Códigos de error de negocio (`THROW`)
 
 | Módulo | Rango |

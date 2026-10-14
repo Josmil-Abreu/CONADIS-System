@@ -1,0 +1,62 @@
+@model List<RegistroLog>
+@{
+    ViewData["Title"] = "Logs del sistema";
+    var niveles = (string[])ViewBag.Niveles;
+    var nivelActual = ViewBag.Nivel as string;
+    var porNivel = Model.GroupBy(r => r.Nivel).ToDictionary(g => g.Key, g => g.Count());
+}
+<h1 class="h3">Logs del sistema</h1>
+<p class="text-muted small">Registros técnicos de Log4Net (tabla <code>dbo.Log4NetLog</code>). Se muestran como máximo los 1000 más recientes del período.</p>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-md-2"><label for="desde" class="form-label">Desde</label><input id="desde" name="desde" type="date" class="form-control" value="@(((DateOnly)ViewBag.Desde).ToString("yyyy-MM-dd"))" /></div>
+    <div class="col-md-2"><label for="hasta" class="form-label">Hasta</label><input id="hasta" name="hasta" type="date" class="form-control" value="@(((DateOnly)ViewBag.Hasta).ToString("yyyy-MM-dd"))" /></div>
+    <div class="col-md-2">
+        <label for="nivel" class="form-label">Nivel</label>
+        <select id="nivel" name="nivel" class="form-select">
+            <option value="">Todos</option>
+            @foreach (var n in niveles)
+            {
+                <option value="@n" selected="@(n == nivelActual)">@n</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2"><button class="btn btn-primary w-100">Filtrar</button></div>
+</form>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-info">No hay registros para ese período y nivel.</div>
+}
+else
+{
+    <p class="small mb-2">
+        <strong>@Model.Count</strong> registro(s):
+        @foreach (var (nivel, total) in porNivel.OrderBy(p => p.Key))
+        {
+            <span class="badge text-bg-secondary me-1">@nivel: @total</span>
+        }
+    </p>
+    <table class="table table-striped bg-white tabla-compacta small">
+        <thead><tr><th>N.º</th><th>Fecha</th><th>Nivel</th><th>Origen</th><th>Mensaje</th></tr></thead>
+        <tbody>
+        @foreach (var r in Model)
+        {
+            var clase = r.Nivel is "ERROR" or "FATAL" ? "text-danger fw-semibold" : r.Nivel == "WARN" ? "text-warning-emphasis fw-semibold" : "";
+            <tr>
+                <td>@r.Id</td>
+                <td>@r.Fecha.LocalDateTime.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                <td class="@clase">@r.Nivel</td>
+                <td>@r.Origen</td>
+                <td>
+                    @r.Mensaje
+                    @if (!string.IsNullOrWhiteSpace(r.Excepcion))
+                    {
+                        <details class="mt-1"><summary>Excepción</summary><pre class="small mb-0">@r.Excepcion</pre></details>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

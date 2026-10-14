@@ -31,6 +31,8 @@ public static class Menu
             [Roles.Administrador, Roles.Auditor, Roles.AnalistaRegistro, Roles.SupervisorRegistro]),
         new("Auditoria", "Auditoría", "Auditoria", "Bitácora de acciones y verificación de integridad.",
             [Roles.Auditor, Roles.Administrador]),
+        new("Logs", "Logs del sistema", "LogsSistema", "Registros técnicos (Log4Net): errores, advertencias e información de los módulos.",
+            [Roles.Auditor, Roles.Administrador]),
         new("Administracion", "Administración", "Administracion", "Usuarios, parámetros y tasas.",
             [Roles.Administrador]),
         new("Integracion", "Integración", "Integracion", "Transacciones de interoperabilidad, pagos recibidos y disponibilidad de servicios.",

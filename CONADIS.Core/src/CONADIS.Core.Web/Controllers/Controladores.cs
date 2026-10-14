@@ -511,6 +511,37 @@ public sealed class AuditoriaController(ServicioAuditoria auditoria) : Controlad
 }
 
 // =====================================================================================================
+// Logs técnicos (tabla dbo.Log4NetLog): solo Auditor y Administrador
+// =====================================================================================================
+
+[Authorize(Policy = "Logs")]
+public sealed class LogsSistemaController(ServicioAuditoria auditoria) : ControladorCore
+{
+    private static readonly string[] Niveles = ["FATAL", "ERROR", "WARN", "INFO", "DEBUG"];
+
+    /// <summary>GET /LogsSistema?desde=...&amp;hasta=...&amp;nivel=ERROR → hasta 1000 registros, los más recientes primero.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Index(DateOnly? desde, DateOnly? hasta, string? nivel, CancellationToken ct)
+    {
+        var d = desde ?? DateOnly.FromDateTime(DateTime.Today.AddDays(-1));
+        var h = hasta ?? DateOnly.FromDateTime(DateTime.Today);
+        if (d > h) (d, h) = (h, d);
+
+        // Solo se aceptan los niveles conocidos: cualquier otro valor se trata como "todos".
+        var nivelValido = Niveles.FirstOrDefault(n => string.Equals(n, nivel, StringComparison.OrdinalIgnoreCase));
+
+        ViewBag.Desde = d;
+        ViewBag.Hasta = h;
+        ViewBag.Nivel = nivelValido;
+        ViewBag.Niveles = Niveles;
+
+        var registros = await auditoria.ListarLogsAsync(Usuario,
+            new DateTimeOffset(d.ToDateTime(TimeOnly.MinValue)), new DateTimeOffset(h.ToDateTime(TimeOnly.MaxValue)), nivelValido, ct);
+        return View(registros);
+    }
+}
+
+// =====================================================================================================
 // Administración: usuarios del personal, parámetros de negocio y tasas
 // =====================================================================================================
 
