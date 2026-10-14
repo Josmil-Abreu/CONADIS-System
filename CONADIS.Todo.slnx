@@ -3,6 +3,9 @@
     Solución SOLO para ejecutar y depurar todo junto en Visual Studio (demo / pruebas de punta a punta).
     Cada módulo sigue siendo independiente y conserva su propia solución (.slnx) y su base de datos.
   -->
+  <Folder Name="/Inicio/">
+    <Project Path="CONADIS.Inicio/CONADIS.Inicio.csproj" />
+  </Folder>
   <Folder Name="/Core/">
     <Project Path="CONADIS.Core/src/CONADIS.Core.Api/CONADIS.Core.Api.csproj" />
     <Project Path="CONADIS.Core/src/CONADIS.Core.Negocio/CONADIS.Core.Negocio.csproj" />

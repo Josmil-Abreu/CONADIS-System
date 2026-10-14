@@ -12,9 +12,11 @@ dotnet build CONADIS.Core\CONADIS.Core.slnx -v q -nologo || goto error
 dotnet build CONADIS.Integracion\CONADIS.Integracion.slnx -v q -nologo || goto error
 dotnet build CONADIS.Web\CONADIS.Web.slnx -v q -nologo || goto error
 dotnet build CONADIS.Caja\CONADIS.Caja.slnx -v q -nologo || goto error
+dotnet build CONADIS.Inicio\CONADIS.Inicio.csproj -v q -nologo || goto error
 
 echo Iniciando Core (https://localhost:7101)...
-start "CONADIS Core" cmd /k dotnet run --no-build --project CONADIS.Core\src\CONADIS.Core.Api --launch-profile https
+start "CONADIS Core API" cmd /k dotnet run --no-build --project CONADIS.Core\src\CONADIS.Core.Api --launch-profile https
+start "CONADIS Core Web (personal)" cmd /k dotnet run --no-build --project CONADIS.Core\src\CONADIS.Core.Web --launch-profile https
 timeout /t 8 /nobreak >nul
 
 echo Iniciando Integracion (https://localhost:7102) y su servicio...
@@ -25,15 +27,12 @@ timeout /t 8 /nobreak >nul
 echo Iniciando Portal Web (https://localhost:7122)...
 start "CONADIS Portal Web" cmd /k dotnet run --no-build --project CONADIS.Web\src\CONADIS.Web --launch-profile https
 
-echo Iniciando la Caja...
-start "CONADIS Caja" dotnet run --no-build --project CONADIS.Caja\src\CONADIS.Caja.App
-
 timeout /t 6 /nobreak >nul
-start "" https://localhost:7102/api/v1/salud
-start "" https://localhost:7122
+echo Abriendo CONADIS Inicio (login unico: ciudadano, cajero o personal)...
+start "" "CONADIS.Inicio\bin\Debug\net10.0-windows\CONADIS.Inicio.exe"
 
 echo.
-echo Listo. Portal: https://localhost:7122  ^|  Swagger Core: https://localhost:7101/swagger  ^|  Swagger Integracion: https://localhost:7102/swagger
+echo Listo. Entre por CONADIS Inicio. Portal: https://localhost:7122  ^|  Personal: https://localhost:7103  ^|  Swagger Integracion: https://localhost:7102/swagger
 echo Para detener todo, ejecute detener-todo.bat (o cierre cada ventana).
 goto :eof
 

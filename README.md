@@ -10,9 +10,21 @@ Caja          ─┘
 
 Web y Caja **nunca** hablan con el Core directamente: siempre pasan por Integración.
 
+**Login único — `CONADIS.Inicio`** (programa de Windows, en la raíz). Cada persona entra por ahí y se abre *su* módulo:
+
+| Quién entra | Escribe | Se abre |
+|---|---|---|
+| Ciudadano | cédula (`401-2345678-8`) o correo | Portal Ciudadano en el navegador (https://localhost:7122) |
+| Personal del CONADIS | su usuario (`admin`, `medico`, `comite1`…) | Sistema interno del Core en el navegador (https://localhost:7103), con el menú de su rol |
+| Cajero / supervisor de caja | `cajero`, `supervisor.caja`… | Aplicación de Caja (Windows) |
+
+La contraseña la verifica la lógica de cada módulo en su propia base; el módulo recibe un **pase firmado** (HMAC-SHA256, vence en 60 s)
+para no pedirla dos veces. La clave del pase (`Inicio:ClaveTraspaso`) debe ser la misma en `CONADIS.Inicio`, `CONADIS.Core.Web`,
+`CONADIS.Web` y `CONADIS.Caja.App`. Cada módulo conserva también su propio login.
+
 | Módulo | Solución | Base de datos | Puerto |
 |---|---|---|---|
-| Core | `CONADIS.Core/CONADIS.Core.slnx` | `CONADIS_CoreDB` | https://localhost:7101 |
+| Core | `CONADIS.Core/CONADIS.Core.slnx` | `CONADIS_CoreDB` | API https://localhost:7101 · Sistema interno del personal https://localhost:7103 |
 | Integración | `CONADIS.Integracion/CONADIS.Integracion.slnx` | `CONADIS_IntegracionDB` | https://localhost:7102 (API) + servicio de Windows |
 | Web | `CONADIS.Web/CONADIS.Web.slnx` | `CONADIS_WebDB` | Portal https://localhost:7122 (lógica en `CONADIS.Web.Negocio`) |
 | Caja | `CONADIS.Caja/CONADIS.Caja.slnx` | `CONADIS_CajaDB` | App Windows Forms `CONADIS.Caja.App` (lógica en `CONADIS.Caja.Negocio`) |
@@ -34,7 +46,7 @@ Los scripts se pueden volver a ejecutar sin problema (`CREATE OR ALTER` / `IF NO
 
 **Atajo:** doble clic en `iniciar-todo.bat` (raíz del repositorio). Compila las 4 soluciones y abre cada programa en su propia ventana, en el orden correcto; `detener-todo.bat` los cierra todos. Así no hace falta abrir Visual Studio cuatro veces.
 
-**Dentro de Visual Studio:** abra `CONADIS.Todo.slnx` (raíz), que contiene los 4 módulos. Una sola vez: clic derecho en la solución → *Configurar proyectos de inicio* → *Varios proyectos de inicio* → *Iniciar* en `CONADIS.Core.Api`, `CONADIS.Integracion.Api`, `CONADIS.Integracion.Servicio`, `CONADIS.Web` y `CONADIS.Caja.App` (los web con perfil **https**). Luego F5 arranca todo.
+**Dentro de Visual Studio:** abra `CONADIS.Todo.slnx` (raíz), que contiene los 4 módulos y el Inicio. Una sola vez: clic derecho en la solución → *Configurar proyectos de inicio* → *Varios proyectos de inicio* → *Iniciar* en `CONADIS.Core.Api`, `CONADIS.Core.Web`, `CONADIS.Integracion.Api`, `CONADIS.Integracion.Servicio`, `CONADIS.Web` y `CONADIS.Inicio` (los web con perfil **https**). **No** inicie `CONADIS.Caja.App`: la abre el Inicio cuando entra un cajero (compílela una vez). Luego F5 arranca todo y aparece la ventana del login único.
 
 Manualmente:
 
