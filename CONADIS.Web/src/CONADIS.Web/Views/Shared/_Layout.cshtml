@@ -32,6 +32,9 @@
                             <li class="nav-item"><a class="nav-link" asp-controller="Carnet" asp-action="Index">Mi carnet</a></li>
                             <li class="nav-item"><a class="nav-link" asp-controller="AyudasTecnicas" asp-action="Index">Ayudas técnicas</a></li>
                             <li class="nav-item"><a class="nav-link" asp-controller="Cuenta" asp-action="Actividad">Mi actividad</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Cuenta" asp-action="ActividadArchivo" asp-route-formato="Pdf"
+                                                    asp-route-desde="@DateTime.Today.AddDays(-30).ToString("yyyy-MM-dd")" asp-route-hasta="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                                    target="_blank">Mi actividad (PDF)</a></li>
                             <li class="nav-item"><span class="nav-link fw-semibold">@User.Identity.Name</span></li>
                             <li class="nav-item">
                                 <form asp-controller="Cuenta" asp-action="CerrarSesion" method="post">

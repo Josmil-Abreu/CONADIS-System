@@ -21,6 +21,7 @@ public sealed class FormReportes : Form
     private readonly Button _listadoExcel = Ui.Boton("Listado (Excel)");
     private readonly Button _cierre = Ui.Boton("Cierre de la sesión", 170);
     private readonly Button _ingresos = Ui.Boton("Ingresos por servicio", 180);
+    private readonly Button _miActividad = Ui.Boton("Mi actividad (PDF)");
 
     private readonly DataGridView _grilla = new()
     {
@@ -45,7 +46,7 @@ public sealed class FormReportes : Form
         filtros.Controls.AddRange(new Control[] { Ui.Etiqueta("Desde"), _desde, Ui.Etiqueta("Hasta"), _hasta, _buscar });
 
         var acciones = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(12, 0, 12, 8) };
-        acciones.Controls.AddRange(new Control[] { _comprobante, _listadoPdf, _listadoExcel, _cierre, _ingresos });
+        acciones.Controls.AddRange(new Control[] { _comprobante, _listadoPdf, _listadoExcel, _miActividad, _cierre, _ingresos });
 
         var contenido = new Panel { Dock = DockStyle.Fill, Padding = new Padding(12) };
         contenido.Controls.Add(_grilla);
@@ -66,6 +67,8 @@ public sealed class FormReportes : Form
             async () => Ui.Abrir(await _reportes.CierreAsync(u, _contexto.SesionActual.SesionId)));
         _ingresos.Click += async (_, _) => await Ui.EjecutarAsync(_ingresos,
             async () => Ui.Abrir(await _reportes.IngresosArchivoAsync(u, Fecha(_desde), Fecha(_hasta))));
+        _miActividad.Click += async (_, _) => await Ui.EjecutarAsync(_miActividad,
+            async () => Ui.Abrir(await _reportes.MiActividadAsync(u, Fecha(_desde), Fecha(_hasta))));
         Load += async (_, _) => await Ui.EjecutarAsync(_buscar, BuscarAsync);
     }
 

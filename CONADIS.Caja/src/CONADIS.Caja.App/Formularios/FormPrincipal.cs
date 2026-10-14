@@ -25,6 +25,7 @@ public sealed class FormPrincipal : Form
     private readonly Button _salir = Ui.Boton("Cerrar sesión");
     private readonly Button _imprimir = Ui.Boton("Imprimir comprobante");
     private readonly Button _reportes = Ui.Boton("Reportes y transacciones", 200);
+    private readonly Button _miActividad = Ui.Boton("Mi actividad (PDF)");
 
     private readonly DataGridView _comprobantes = new()
     {
@@ -56,7 +57,7 @@ public sealed class FormPrincipal : Form
         Font = Ui.Normal;
 
         var barraBotones = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(12) };
-        barraBotones.Controls.AddRange(new Control[] { _abrirCaja, _cobrar, _imprimir, _arqueo, _reportes, _sincronizar, _salir });
+        barraBotones.Controls.AddRange(new Control[] { _abrirCaja, _cobrar, _imprimir, _arqueo, _reportes, _miActividad, _sincronizar, _salir });
 
         var titulo = new Label
         {
@@ -81,6 +82,10 @@ public sealed class FormPrincipal : Form
         // Reimprimir el e-CF del comprobante seleccionado (doble clic también lo imprime)
         _imprimir.Click += async (_, _) => await Ui.EjecutarAsync(_imprimir, ImprimirSeleccionadoAsync);
         _comprobantes.CellDoubleClick += async (_, e) => { if (e.RowIndex >= 0) await Ui.EjecutarAsync(_imprimir, ImprimirSeleccionadoAsync); };
+        // Todo lo que hizo el usuario de la sesión en los últimos 30 días
+        _miActividad.Click += async (_, _) => await Ui.EjecutarAsync(_miActividad, async () =>
+            Ui.Abrir(await _reportesCaja.MiActividadAsync(_contexto.UsuarioActual,
+                DateOnly.FromDateTime(DateTime.Today.AddDays(-30)), DateOnly.FromDateTime(DateTime.Today))));
         _reportes.Click += (_, _) =>
         {
             using var form = _servicios.GetRequiredService<FormReportes>();

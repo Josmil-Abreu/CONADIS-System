@@ -443,6 +443,16 @@ public sealed class ServicioReportesCaja(EjecutorSp db)
         => await ArchivoAsync(u, "rptTransaccionesCaja", formato, $"Del {desde:dd/MM/yyyy} al {hasta:dd/MM/yyyy}", ct,
             ("Datos", await TransaccionesAsync(u, desde, hasta, ct)));
 
+    /// <summary>"Mi actividad (PDF)": solo lo que hizo el usuario de la sesión, sea cajero o supervisor.</summary>
+    public async Task<ArchivoReporte> MiActividadAsync(UsuarioCaja u, DateOnly desde, DateOnly hasta, FormatoReporte formato = FormatoReporte.Pdf,
+        CancellationToken ct = default)
+    {
+        var datos = await db.ConsultarAsync("caja.ppRptTransacciones",
+            [Parametro.Fecha("@Desde", desde), Parametro.Fecha("@Hasta", hasta), Parametro.Texto("@Usuario", u.Username, 50)], ct);
+        return await ArchivoAsync(u, "rptTransaccionesCaja", formato,
+            $"Actividad de {u.NombreCompleto} ({u.Username}) del {desde:dd/MM/yyyy} al {hasta:dd/MM/yyyy}", ct, ("Datos", datos));
+    }
+
     /// <summary>Comprobante de una transacción de la bitácora (el cajero solo los suyos).</summary>
     public async Task<ArchivoReporte> ComprobanteAsync(UsuarioCaja u, long eventoId, FormatoReporte formato = FormatoReporte.Pdf, CancellationToken ct = default)
     {

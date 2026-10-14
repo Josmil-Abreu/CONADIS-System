@@ -16,7 +16,7 @@
     }
     <div class="col-md-2"><button class="btn btn-primary w-100">Filtrar</button></div>
     <div class="col-md-2"><a class="btn btn-outline-primary w-100" target="_blank"
-        href="@Url.Action("Descargar", "Reportes", new { reporte = "transacciones", desde = ((DateOnly)ViewBag.Desde).ToString("yyyy-MM-dd"), hasta = ((DateOnly)ViewBag.Hasta).ToString("yyyy-MM-dd"), formato = "Pdf" })">Listado PDF</a></div>
+        href="@Url.Action(verTodos ? "Descargar" : "MiActividad", verTodos ? "Reportes" : "Documentos", new { reporte = "transacciones", desde = ((DateOnly)ViewBag.Desde).ToString("yyyy-MM-dd"), hasta = ((DateOnly)ViewBag.Hasta).ToString("yyyy-MM-dd"), formato = "Pdf" })">Listado PDF</a></div>
 </form>
 @if (Model.Rows.Count == 0) { <p class="text-muted">No hay transacciones en el período.</p> }
 else

@@ -25,6 +25,8 @@
                         }
                     </ul>
                     @{ var u = User.Usuario(); }
+                    <a class="btn btn-light btn-sm me-3" asp-controller="Documentos" asp-action="MiActividad" asp-route-formato="Pdf" target="_blank"
+                       title="Descarga en PDF todo lo que usted hizo en los últimos 30 días">Mi actividad (PDF)</a>
                     <span class="navbar-text me-3 small">@u?.NombreCompleto · @Menu.TextoRol(u?.Rol ?? "")</span>
                     <form asp-controller="Cuenta" asp-action="CerrarSesion" method="post" class="d-inline">
                         <button type="submit" class="btn btn-outline-light btn-sm">Cerrar sesión</button>

@@ -271,6 +271,19 @@ public sealed class DocumentosController(ServicioReportes reportes) : Controlado
         return View(await reportes.TransaccionesAsync(Usuario, d, h, usuario: usuario, ct: ct));
     }
 
+    /// <summary>
+    /// "Mi actividad (PDF)": todo lo que hizo el usuario de la sesión (últimos 30 días por defecto).
+    /// Está en el menú superior de todas las pantallas, para cualquier rol.
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> MiActividad(DateOnly? desde, DateOnly? hasta, FormatoReporte formato, CancellationToken ct)
+    {
+        var (d, h) = ReportesController.Rango(desde, hasta);
+        var datos = await reportes.TransaccionesAsync(Usuario, d, h, usuario: Usuario.Username, ct: ct);
+        return Archivo(await reportes.ArchivoAsync(Usuario, "rptTransacciones", datos, formato,
+            $"Actividad de {Usuario.NombreCompleto} ({Usuario.Username}) del {d:dd/MM/yyyy} al {h:dd/MM/yyyy}", Ip, ct));
+    }
+
     /// <summary>Comprobante de una transacción (cualquier operación registrada en la bitácora).</summary>
     [HttpGet]
     public async Task<IActionResult> Comprobante(long id, FormatoReporte formato, CancellationToken ct)
