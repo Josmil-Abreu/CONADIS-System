@@ -34,6 +34,8 @@ Los scripts se pueden volver a ejecutar sin problema (`CREATE OR ALTER` / `IF NO
 
 **Atajo:** doble clic en `iniciar-todo.bat` (raíz del repositorio). Compila las 4 soluciones y abre cada programa en su propia ventana, en el orden correcto; `detener-todo.bat` los cierra todos. Así no hace falta abrir Visual Studio cuatro veces.
 
+**Dentro de Visual Studio:** abra `CONADIS.Todo.slnx` (raíz), que contiene los 4 módulos. Una sola vez: clic derecho en la solución → *Configurar proyectos de inicio* → *Varios proyectos de inicio* → *Iniciar* en `CONADIS.Core.Api`, `CONADIS.Integracion.Api`, `CONADIS.Integracion.Servicio`, `CONADIS.Web` y `CONADIS.Caja.App` (los web con perfil **https**). Luego F5 arranca todo.
+
 Manualmente:
 
 1. **Core API**: proyecto `CONADIS.Core.Api` → https://localhost:7101/swagger

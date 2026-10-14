@@ -1,0 +1,27 @@
+<Solution>
+  <!--
+    Solución SOLO para ejecutar y depurar todo junto en Visual Studio (demo / pruebas de punta a punta).
+    Cada módulo sigue siendo independiente y conserva su propia solución (.slnx) y su base de datos.
+  -->
+  <Folder Name="/Core/">
+    <Project Path="CONADIS.Core/src/CONADIS.Core.Api/CONADIS.Core.Api.csproj" />
+    <Project Path="CONADIS.Core/src/CONADIS.Core.Negocio/CONADIS.Core.Negocio.csproj" />
+    <Project Path="CONADIS.Core/test/CONADIS.Core.Pruebas/CONADIS.Core.Pruebas.csproj" />
+  </Folder>
+  <Folder Name="/Integracion/">
+    <Project Path="CONADIS.Integracion/src/CONADIS.Integracion.Api/CONADIS.Integracion.Api.csproj" />
+    <Project Path="CONADIS.Integracion/src/CONADIS.Integracion.Negocio/CONADIS.Integracion.Negocio.csproj" />
+    <Project Path="CONADIS.Integracion/src/CONADIS.Integracion.Servicio/CONADIS.Integracion.Servicio.csproj" />
+    <Project Path="CONADIS.Integracion/test/CONADIS.Integracion.Pruebas/CONADIS.Integracion.Pruebas.csproj" />
+  </Folder>
+  <Folder Name="/Web/">
+    <Project Path="CONADIS.Web/src/CONADIS.Web/CONADIS.Web.csproj" />
+    <Project Path="CONADIS.Web/src/CONADIS.Web.Negocio/CONADIS.Web.Negocio.csproj" />
+    <Project Path="CONADIS.Web/test/CONADIS.Web.Pruebas/CONADIS.Web.Pruebas.csproj" />
+  </Folder>
+  <Folder Name="/Caja/">
+    <Project Path="CONADIS.Caja/src/CONADIS.Caja.App/CONADIS.Caja.App.csproj" />
+    <Project Path="CONADIS.Caja/src/CONADIS.Caja.Negocio/CONADIS.Caja.Negocio.csproj" />
+    <Project Path="CONADIS.Caja/test/CONADIS.Caja.Pruebas/CONADIS.Caja.Pruebas.csproj" />
+  </Folder>
+</Solution>
