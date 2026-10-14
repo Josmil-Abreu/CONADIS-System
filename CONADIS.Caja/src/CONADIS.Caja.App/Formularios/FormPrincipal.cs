@@ -77,8 +77,8 @@ public sealed class FormPrincipal : Form
         Controls.Add(estado);
 
         _abrirCaja.Click += (_, _) => AbrirCaja();
-        _cobrar.Click += async (_, _) => await Ui.EjecutarAsync(_cobrar, CobrarAsync);
-        _arqueo.Click += async (_, _) => await Ui.EjecutarAsync(_arqueo, ArqueoAsync);
+        _cobrar.Click += async (_, _) => { await Ui.EjecutarAsync(_cobrar, CobrarAsync); AplicarEstadoBotones(); };
+        _arqueo.Click += async (_, _) => { await Ui.EjecutarAsync(_arqueo, ArqueoAsync); AplicarEstadoBotones(); };
         // Reimprimir el e-CF del comprobante seleccionado (doble clic también lo imprime)
         _imprimir.Click += async (_, _) => await Ui.EjecutarAsync(_imprimir, ImprimirSeleccionadoAsync);
         _comprobantes.CellDoubleClick += async (_, e) => { if (e.RowIndex >= 0) await Ui.EjecutarAsync(_imprimir, ImprimirSeleccionadoAsync); };
@@ -106,7 +106,7 @@ public sealed class FormPrincipal : Form
 
         _contexto.Cambio += AlCambiarContexto;
         _sincronizacion.Resultado += AlSincronizar;
-        Load += async (_, _) => await Ui.EjecutarAsync(_abrirCaja, CargarAsync);
+        Load += async (_, _) => { await Ui.EjecutarAsync(_abrirCaja, CargarAsync); AplicarEstadoBotones(); };
         FormClosed += (_, _) =>
         {
             _contexto.Cambio -= AlCambiarContexto;
@@ -173,6 +173,16 @@ public sealed class FormPrincipal : Form
 
         _estadoUsuario.Text = _contexto.Usuario is { } u ? $"{u.NombreCompleto} ({u.Rol})" : "Sin sesión";
         _estadoCaja.Text = _contexto.Sesion is { } s ? $"  |  {s.CajaCodigo} · {s.Sucursal} · {s.Estado}" : "  |  Caja cerrada";
+        AplicarEstadoBotones();
+    }
+
+    /// <summary>
+    /// Habilita cada botón según haya o no una caja abierta. Se llama también después de cada acción, porque
+    /// Ui.EjecutarAsync vuelve a habilitar el botón al terminar y eso pisaba el estado (p. ej. "Abrir caja"
+    /// quedaba activo con una caja ya abierta, o "Cobrar" activo después del cierre).
+    /// </summary>
+    private void AplicarEstadoBotones()
+    {
         _abrirCaja.Enabled = _contexto.Sesion is null;
         _cobrar.Enabled = _contexto.PuedeCobrar;
         _imprimir.Enabled = _contexto.Sesion is not null;
