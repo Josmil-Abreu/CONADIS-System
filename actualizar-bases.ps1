@@ -39,8 +39,9 @@ foreach ($m in $modulos) {
 
     Write-Host "`n=== $m ($($scripts.Count) scripts) ===" -ForegroundColor Cyan
     foreach ($s in $scripts) {
-        # -b: se detiene si el script falla · -f 65001: lee UTF-8 (acentos y ñ) · -E: usuario de Windows
-        $salida = & sqlcmd -S $Servidor -E -b -f 65001 -i $s.FullName 2>&1
+        # -b: se detiene si falla · -f 65001: UTF-8 (acentos y ñ) · -E: usuario de Windows
+        # -I: QUOTED_IDENTIFIER ON, como SSMS (sin esto fallan los índices filtrados y los SP quedan mal creados)
+        $salida = & sqlcmd -S $Servidor -E -I -b -f 65001 -i $s.FullName 2>&1
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  OK     $($s.Name)" -ForegroundColor Green
         }
