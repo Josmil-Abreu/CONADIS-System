@@ -42,6 +42,9 @@ En SSMS o en Visual Studio (Explorador de objetos de SQL Server), ejecute los sc
 
 Los scripts se pueden volver a ejecutar sin problema (`CREATE OR ALTER` / `IF NOT EXISTS`).
 
+**Atajo:** `powershell -ExecutionPolicy Bypass -File actualizar-bases.ps1` corre todos los scripts de los 4 módulos en orden con `sqlcmd`
+(opciones: `-Modulo Caja`, `-Demo` para los datos de demostración, `-Pruebas` para los `99_*`). Úselo después de cada `git pull`.
+
 ## 2. Orden de arranque
 
 **Atajo:** doble clic en `iniciar-todo.bat` (raíz del repositorio). Compila las 4 soluciones y abre cada programa en su propia ventana, en el orden correcto; `detener-todo.bat` los cierra todos. Así no hace falta abrir Visual Studio cuatro veces.
