@@ -1,13 +1,123 @@
 @model EvaluacionDetalle
-@{ ViewData["Title"] = $"Evaluación {Model.EvaluacionId}"; }
+@{
+    ViewData["Title"] = $"Evaluación {Model.EvaluacionId}";
+    var u = Context.User.Usuario();
+    var codigos = (List<CodigoCif>)ViewBag.Codigos;
+    var abierta = Model.Estado != "Consolidada";
+    var w = Model.Whodas;
+    string V(decimal? d) => d?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "";
+}
 <a asp-action="Index" class="small">← Volver a la agenda</a>
-<h1 class="h3 mt-2">Evaluación @Model.EvaluacionId · @Model.NombreCompleto</h1>
-<p class="text-muted">Expediente @Model.NumeroExpediente · Estado: @Model.Estado · WHODAS: @(Model.PuntajeWhodas?.ToString("N1") ?? "pendiente") · Propuesta: @Model.GradoPropuesto @Model.TipoPropuesto</p>
-<div class="alert alert-info">
-    Pantalla pendiente: codificación CIF por disciplina, cuestionario WHODAS 2.0, firma de la disciplina y consolidación
-    (métodos de <code>ServicioValoracion</code>).
+<div class="d-flex flex-wrap justify-content-between align-items-start mt-2">
+    <div>
+        <h1 class="h3">Evaluación @Model.EvaluacionId · @Model.NombreCompleto</h1>
+        <p class="text-muted mb-1">Expediente @Model.NumeroExpediente · Estado: <strong>@Model.Estado</strong> · Su disciplina: <strong>@(u?.Disciplina ?? "—")</strong></p>
+        <p class="mb-3">WHODAS: <strong>@(Model.PuntajeWhodas?.ToString("N1") ?? "pendiente")</strong> ·
+            Grado propuesto: <strong>@(Model.GradoPropuesto ?? "—")</strong> · Tipo: <strong>@(Model.TipoPropuesto ?? "—")</strong>
+            @if (Model.VersionBaremo is not null) { <span class="text-muted">(baremo @Model.VersionBaremo)</span> }</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-controller="Documentos" asp-action="Valoracion" asp-route-id="@Model.EvaluacionId">Informe (PDF)</a>
 </div>
-<h2 class="h5">Códigos CIF registrados</h2>
-<ul>
-    @foreach (var c in Model.Codificaciones) { <li>@c.Codigo · @c.Descripcion · @c.Disciplina · calificador @c.Calificador1</li> }
-</ul>
+
+<div class="row g-4">
+<section class="col-lg-7" aria-labelledby="t-cif">
+    <h2 id="t-cif" class="h5">1. Codificación CIF</h2>
+    <table class="table table-sm bg-white tabla-compacta">
+        <thead><tr><th>Código</th><th>Descripción</th><th>Disciplina</th><th>Calif.</th><th>Evaluador</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var c in Model.Codificaciones)
+        {
+            <tr><td><code>@c.Codigo</code></td><td>@c.Descripcion @(c.EsFacilitador ? "(facilitador)" : "")<div class="small text-muted">@c.Observacion</div></td>
+                <td>@c.Disciplina</td><td>@c.Calificador1@(c.Calificador2 is { } q2 ? $".{q2}" : "")</td><td>@c.Evaluador</td>
+                <td>@if (abierta && c.Disciplina == u?.Disciplina)
+                    {
+                        <form method="post" asp-action="Quitar"><input type="hidden" name="id" value="@Model.EvaluacionId" />
+                            <input type="hidden" name="codigo" value="@c.Codigo" /><button class="btn btn-link btn-sm p-0 text-danger">Quitar</button></form>
+                    }</td></tr>
+        }
+        @if (Model.Codificaciones.Count == 0) { <tr><td colspan="6" class="text-muted">Sin códigos todavía.</td></tr> }
+        </tbody>
+    </table>
+    @if (abierta)
+    {
+        <form method="get" class="d-flex gap-2 mb-2" role="search">
+            <input type="hidden" name="id" value="@Model.EvaluacionId" />
+            <label for="cif" class="visually-hidden">Buscar en el catálogo CIF</label>
+            <input id="cif" name="cif" value="@ViewBag.Cif" class="form-control" placeholder="Buscar código o descripción CIF (ej. b730, movilidad)" />
+            <button class="btn btn-outline-primary">Buscar</button>
+        </form>
+        <form method="post" asp-action="Codificar" class="bg-white border rounded p-3">
+            <input type="hidden" name="id" value="@Model.EvaluacionId" />
+            <div class="row g-2">
+                <div class="col-md-4"><label class="form-label" for="codigo">Código CIF</label>
+                    @if (codigos.Count > 0)
+                    {
+                        <select class="form-select" id="codigo" name="codigo">@foreach (var c in codigos) { <option value="@c.Codigo">@c.Codigo · @c.Descripcion</option> }</select>
+                    }
+                    else { <input class="form-control" id="codigo" name="codigo" required maxlength="10" /> }
+                </div>
+                <div class="col-md-2"><label class="form-label" for="calificador1">Calificador</label>
+                    <select class="form-select" id="calificador1" name="calificador1">@for (var i = 0; i <= 4; i++) { <option>@i</option> }<option>8</option><option>9</option></select></div>
+                <div class="col-md-2"><label class="form-label" for="calificador2">2.º calif.</label>
+                    <select class="form-select" id="calificador2" name="calificador2"><option value="">—</option>@for (var i = 0; i <= 4; i++) { <option>@i</option> }</select></div>
+                <div class="col-md-4 d-flex align-items-end"><div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="esFacilitador" name="esFacilitador" value="true" />
+                    <label class="form-check-label" for="esFacilitador">Es facilitador (factor ambiental +)</label></div></div>
+                <div class="col-12"><label class="form-label" for="observacion">Observación</label>
+                    <input class="form-control" id="observacion" name="observacion" maxlength="300" /></div>
+            </div>
+            <button class="btn btn-primary mt-2">Agregar código</button>
+        </form>
+    }
+</section>
+
+<section class="col-lg-5" aria-labelledby="t-wh">
+    <h2 id="t-wh" class="h5">2. WHODAS 2.0 (0 a 100 por dominio)</h2>
+    <form method="post" asp-action="Whodas" class="bg-white border rounded p-3">
+        <input type="hidden" name="id" value="@Model.EvaluacionId" />
+        <input type="hidden" name="version" value="@Convert.ToBase64String(Model.RowVersion)" />
+        @foreach (var (nombre, texto, valor) in new[] {
+            ("cognicion", "Cognición", w?.Cognicion), ("movilidad", "Movilidad", w?.Movilidad), ("autocuidado", "Autocuidado", w?.Autocuidado),
+            ("relaciones", "Relaciones", w?.Relaciones), ("actividades", "Actividades de la vida diaria", w?.Actividades),
+            ("participacion", "Participación", w?.Participacion) })
+        {
+            <div class="row mb-2 align-items-center">
+                <label class="col-7 col-form-label" for="@nombre">@texto</label>
+                <div class="col-5"><input class="form-control" type="number" min="0" max="100" step="0.01" id="@nombre" name="@nombre" value="@V(valor)" required disabled="@(!abierta)" /></div>
+            </div>
+        }
+        <label class="form-label" for="observaciones">Observaciones</label>
+        <textarea class="form-control mb-2" id="observaciones" name="observaciones" rows="2" maxlength="1000" disabled="@(!abierta)">@Model.Observaciones</textarea>
+        @if (abierta) { <button class="btn btn-primary">Guardar WHODAS y calcular grado</button> }
+        <div class="form-text">Si otro evaluador guardó antes, se le pedirá recargar para no pisar su trabajo.</div>
+    </form>
+
+    <h2 class="h5 mt-4">3. Firmas de las disciplinas</h2>
+    <ul class="list-group mb-3">
+        @foreach (var d in new[] { "Medica", "Psicologica", "Social" })
+        {
+            var f = Model.Firmas.FirstOrDefault(x => x.Disciplina == d);
+            <li class="list-group-item d-flex justify-content-between"><span>@d</span>
+                <span>@(f is null ? "pendiente" : $"{f.Evaluador} · {f.FechaFirma.LocalDateTime:dd/MM/yyyy HH:mm}")</span></li>
+        }
+    </ul>
+    @if (abierta && u?.Disciplina is not null && Model.Firmas.All(f => f.Disciplina != u.Disciplina))
+    {
+        <form method="post" asp-action="Firmar"><input type="hidden" name="id" value="@Model.EvaluacionId" />
+            <button class="btn btn-success">Firmar mi disciplina (@u.Disciplina)</button></form>
+    }
+
+    @if (abierta && Model.Firmas.Count >= 3)
+    {
+        <h2 class="h5 mt-4">4. Consolidar</h2>
+        <form method="post" asp-action="Consolidar" class="d-flex gap-2">
+            <input type="hidden" name="id" value="@Model.EvaluacionId" />
+            <label class="visually-hidden" for="tipoPropuesto">Tipo de discapacidad</label>
+            <select class="form-select" id="tipoPropuesto" name="tipoPropuesto">
+                @foreach (var t in Valores.TiposDiscapacidad) { <option selected="@(t == Model.TipoPropuesto)">@t</option> }
+            </select>
+            <button class="btn btn-primary">Enviar al comité</button>
+        </form>
+    }
+</section>
+</div>

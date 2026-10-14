@@ -126,7 +126,7 @@ public sealed class ExpedientesController(ServicioExpedientes expedientes, Servi
 // =====================================================================================================
 
 [Authorize(Policy = "Valoracion")]
-public sealed class ValoracionController(ServicioCitas citas, ServicioValoracion valoracion) : ControladorCore
+public sealed class ValoracionController(ServicioCitas citas, ServicioValoracion valoracion, ServicioCatalogos catalogos) : ControladorCore
 {
     [HttpGet]
     public async Task<IActionResult> Index(DateOnly? fecha, CancellationToken ct)
@@ -149,15 +149,65 @@ public sealed class ValoracionController(ServicioCitas citas, ServicioValoracion
         return RedirectToAction(nameof(Evaluacion), new { id = evaluacionId });
     }
 
-    /// <summary>
-    /// PANTALLA PENDIENTE: aquí van la codificación CIF (GuardarCodificacionAsync / QuitarCodificacionAsync),
-    /// el WHODAS (RegistrarWhodasAsync con RowVersion), la firma de la disciplina (FirmarAsync) y la consolidación.
-    /// </summary>
+    /// <summary>Codificación CIF por disciplina, WHODAS 2.0, firma de la disciplina y consolidación.</summary>
     [HttpGet]
-    public async Task<IActionResult> Evaluacion(int id, CancellationToken ct)
+    public async Task<IActionResult> Evaluacion(int id, string? cif, CancellationToken ct)
     {
         var e = await valoracion.ObtenerAsync(id, ct);
-        return e is null ? NotFound() : View(e);
+        if (e is null) return NotFound();
+        ViewBag.Cif = cif;
+        ViewBag.Codigos = string.IsNullOrWhiteSpace(cif) ? new List<CodigoCif>() : await catalogos.BuscarCodigosCifAsync(cif, null, ct);
+        return View(e);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Codificar(int id, string codigo, int calificador1, int? calificador2, bool esFacilitador,
+        string? observacion, CancellationToken ct)
+    {
+        await valoracion.GuardarCodificacionAsync(Usuario, id, new NuevaCodificacion(codigo ?? "", calificador1, calificador2, esFacilitador, observacion), ct);
+        TempData["Mensaje"] = $"Código {codigo} registrado.";
+        return RedirectToAction(nameof(Evaluacion), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Quitar(int id, string codigo, CancellationToken ct)
+    {
+        await valoracion.QuitarCodificacionAsync(Usuario, id, codigo, ct);
+        TempData["Mensaje"] = $"Código {codigo} quitado.";
+        return RedirectToAction(nameof(Evaluacion), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Whodas(int id, string version, decimal cognicion, decimal movilidad, decimal autocuidado,
+        decimal relaciones, decimal actividades, decimal participacion, string? observaciones, CancellationToken ct)
+    {
+        byte[] rv;
+        try { rv = Convert.FromBase64String(version ?? ""); } catch (FormatException) { rv = []; }
+        var r = await valoracion.RegistrarWhodasAsync(Usuario, id, rv,
+            new PuntajesWhodas(cognicion, movilidad, autocuidado, relaciones, actividades, participacion), observaciones, ct);
+        TempData["Mensaje"] = $"WHODAS guardado: puntaje {r.PuntajeWhodas:N1}, grado propuesto {r.GradoPropuesto ?? "sin discapacidad"} (baremo {r.VersionBaremo}).";
+        return RedirectToAction(nameof(Evaluacion), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Firmar(int id, CancellationToken ct)
+    {
+        await valoracion.FirmarAsync(Usuario, id, ct);
+        TempData["Mensaje"] = "Disciplina firmada.";
+        return RedirectToAction(nameof(Evaluacion), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Consolidar(int id, string tipoPropuesto, CancellationToken ct)
+    {
+        await valoracion.ConsolidarAsync(Usuario, id, tipoPropuesto, ct);
+        TempData["Mensaje"] = "Evaluación consolidada: pasa al comité para el dictamen.";
+        return RedirectToAction(nameof(Evaluacion), new { id });
     }
 }
 
