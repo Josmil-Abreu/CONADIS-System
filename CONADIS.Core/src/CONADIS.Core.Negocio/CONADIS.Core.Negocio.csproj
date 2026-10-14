@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    CONADIS.Core.Negocio: toda la lógica del módulo Core, sin interfaz gráfica.
+      Datos/      -> única puerta a SQL Server: solo Stored Procedures (cero SQL concatenado)
+      Logging/    -> configuración de Log4Net (archivo + tabla Log4NetLog)
+      Seguridad/  -> hash de contraseñas PBKDF2 y API keys
+      Modelos/    -> objetos que devuelven los servicios
+      Servicios/  -> un servicio por área de negocio (autenticación, usuarios, expedientes...)
+    La API REST (Paso 6) y la aplicación interna (más adelante) solo llaman a estos servicios.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CONADIS.Core.Negocio</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="log4net" Version="3.5.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="CONADIS.Core.Pruebas" />
+  </ItemGroup>
+
+</Project>
