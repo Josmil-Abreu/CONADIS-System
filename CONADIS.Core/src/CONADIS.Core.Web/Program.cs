@@ -4,6 +4,7 @@ using CONADIS.Core.Negocio.Modelos;
 using CONADIS.Core.Negocio.Seguridad;
 using CONADIS.Core.Negocio.Servicios;
 using CONADIS.Core.Web.Infraestructura;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -59,6 +60,16 @@ builder.Services
         o.Cookie.HttpOnly = true;
         o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         o.Cookie.Name = "CONADIS.Core";
+        // Una sesión de una ejecución anterior (cookie restaurada por el navegador) se rechaza y se borra:
+        // el personal debe volver a entrar desde CONADIS.Inicio.
+        o.Events.OnValidatePrincipal = async ctx =>
+        {
+            if (ctx.Principal?.FindFirst(SesionPersonal.ClaimInstancia)?.Value != SesionPersonal.Instancia)
+            {
+                ctx.RejectPrincipal();
+                await ctx.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            }
+        };
     });
 builder.Services.AddAuthorization(o =>
 {

@@ -62,13 +62,21 @@ public static class Menu
 public static class SesionPersonal
 {
     public const string ClaimUsuario = "usuario";
+    public const string ClaimInstancia = "instancia";
+
+    /// <summary>
+    /// Identificador de esta ejecución del sistema interno. Cada cookie lleva el de la ejecución que la emitió:
+    /// al reiniciar el Core Web, las sesiones anteriores dejan de valer (aunque el navegador restaure la cookie).
+    /// </summary>
+    public static readonly string Instancia = Guid.NewGuid().ToString("N");
 
     public static ClaimsPrincipal Principal(UsuarioSesion u, string esquema) => new(new ClaimsIdentity(
     [
         new Claim(ClaimTypes.NameIdentifier, u.UsuarioId.ToString()),
         new Claim(ClaimTypes.Name, u.NombreCompleto),
         new Claim(ClaimTypes.Role, u.Rol),
-        new Claim(ClaimUsuario, JsonSerializer.Serialize(u))
+        new Claim(ClaimUsuario, JsonSerializer.Serialize(u)),
+        new Claim(ClaimInstancia, Instancia)
     ], esquema));
 
     public static UsuarioSesion? Usuario(this ClaimsPrincipal p)
