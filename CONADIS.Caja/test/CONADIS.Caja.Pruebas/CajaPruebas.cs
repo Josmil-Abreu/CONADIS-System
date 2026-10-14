@@ -145,13 +145,14 @@ public class ClienteIntegracionCajaPruebas
         var tx = Guid.NewGuid();
         var falsa = IntegracionFalsa.Fija(HttpStatusCode.Accepted,
             $$"""{"transaccionId":"{{tx}}","estado":"Recibido","esNuevo":true,"fechaRecepcion":"2026-10-14T10:00:00-04:00","detalle":null}""");
-        var pago = new PagoCaja(tx, "Caja", "E320000000001", "DUP-CARNET", 1, 500m, "Efectivo", "40123456788", "Cliente", null, null,
+        var pago = new PagoCaja(tx, SincronizadorCaja.OrigenCaja, "E320000000001", "DUP-CARNET", 1, 500m, "Efectivo", "40123456788", "Cliente", null, null,
             "CAJA-01", "cajero", DateTimeOffset.Now);
         var r = await Ayudas.Cliente(falsa).EnviarPagoAsync(pago, "cajero");
         Assert.True(r.EsNuevo);
         Assert.Equal("Recibido", r.Estado);
         Assert.Contains("\"transaccionId\"", falsa.Peticiones[0].Cuerpo);
         Assert.Contains("\"tasaCodigo\":\"DUP-CARNET\"", falsa.Peticiones[0].Cuerpo);
+        Assert.Contains("\"origen\":\"CAJA\"", falsa.Peticiones[0].Cuerpo);   // Integración y el Core exigen CAJA en mayúsculas
     }
 
     [Fact]

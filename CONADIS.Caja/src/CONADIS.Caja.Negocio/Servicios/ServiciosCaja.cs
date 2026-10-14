@@ -267,6 +267,9 @@ public sealed class SincronizadorCaja(EjecutorSp db, ClienteIntegracionCaja inte
 {
     public const int Lote = 50;
 
+    /// <summary>Origen que exigen Integración y el Core para los cobros de la caja.</summary>
+    public const string OrigenCaja = "CAJA";
+
     public async Task<ResumenSincronizacion> ResumenAsync(CancellationToken ct = default)
     {
         var f = (await db.ConsultarAsync("caja.ppSincronizacion_Resumen", null, ct)).Rows[0];
@@ -311,7 +314,7 @@ public sealed class SincronizadorCaja(EjecutorSp db, ClienteIntegracionCaja inte
         foreach (DataRow f in pendientes.Rows)
         {
             var tx = f.Guid("TransaccionId");
-            var pago = new PagoCaja(tx, "Caja", f.Texto("NumeroComprobante"), f.Texto("TasaCodigo"), f.Entero("Cantidad"), f.Decimal("Total"),
+            var pago = new PagoCaja(tx, OrigenCaja, f.Texto("NumeroComprobante"), f.Texto("TasaCodigo"), f.Entero("Cantidad"), f.Decimal("Total"),
                 f.TextoONulo("MedioPago") ?? MediosPagoCaja.Efectivo, f.Texto("DocumentoCliente"), f.Texto("NombreCliente"),
                 f.TextoONulo("NumeroOrden"), null, f.Texto("CajaCodigo"), f.Texto("Cajero"), f.FechaHora("Fecha"));
             try
