@@ -42,14 +42,14 @@
         <h2 class="h5">Solicitudes</h2>
         @foreach (var s in Model.Solicitudes)
         {
-            <p class="small mb-1">@s.NumeroTramite · @s.Tipo · @s.Canal · @s.Estado · Diagnóstico: @s.EstadoDiagnostico (@s.CodigoCie10)</p>
+            <p class="small mb-1">@s.NumeroTramite · @s.Tipo · @s.Canal · @s.Estado · Diagnóstico: @s.EstadoDiagnostico (@s.CodigoCie10) · <a asp-controller="Documentos" asp-action="Acuse" asp-route-id="@s.NumeroTramite" target="_blank">Acuse (PDF)</a></p>
         }
     </div></div>
     <div class="col-lg-6"><div class="tarjeta">
         <h2 class="h5">Citas, evaluaciones y carnets</h2>
         @foreach (var x in Model.Citas) { <p class="small mb-1">Cita: @x.FechaHora.LocalDateTime.ToString("dd/MM/yyyy HH:mm") · @x.Centro · @x.Estado</p> }
-        @foreach (var x in Model.Evaluaciones) { <p class="small mb-1">Evaluación @x.EvaluacionId: @x.Estado · WHODAS @x.PuntajeWhodas · @x.GradoPropuesto @x.TipoPropuesto · @x.Dictamen</p> }
-        @foreach (var x in Model.Carnets) { <p class="small mb-1">Carnet @x.NumeroCarnet · @x.Estado · vence @(x.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "permanente")</p> }
-        @foreach (var x in Model.Ordenes) { <p class="small mb-1">Orden @x.NumeroOrden · @x.Concepto · RD$ @x.Total.ToString("N2") · @x.Estado</p> }
+        @foreach (var x in Model.Evaluaciones) { <p class="small mb-1">Evaluación @x.EvaluacionId: @x.Estado · WHODAS @x.PuntajeWhodas · @x.GradoPropuesto @x.TipoPropuesto · @x.Dictamen · <a asp-controller="Documentos" asp-action="Valoracion" asp-route-id="@x.EvaluacionId" target="_blank">Informe (PDF)</a></p> }
+        @foreach (var x in Model.Carnets) { <p class="small mb-1">Carnet @x.NumeroCarnet · @x.Estado · vence @(x.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "permanente") · <a asp-controller="Documentos" asp-action="Carnet" asp-route-id="@x.CarnetId" target="_blank">Certificado (PDF)</a></p> }
+        @foreach (var x in Model.Ordenes) { <p class="small mb-1">Orden @x.NumeroOrden · @x.Concepto · RD$ @x.Total.ToString("N2") · @x.Estado · <a asp-controller="Documentos" asp-action="Recibo" asp-route-id="@x.NumeroOrden" target="_blank">Recibo (PDF)</a></p> }
     </div></div>
 </div>

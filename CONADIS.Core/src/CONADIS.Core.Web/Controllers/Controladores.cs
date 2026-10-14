@@ -1,5 +1,6 @@
 using System.Data;
 using CONADIS.Core.Negocio.Modelos;
+using CONADIS.Core.Negocio.Reportes;
 using CONADIS.Core.Negocio.Servicios;
 using CONADIS.Core.Web.Infraestructura;
 using Microsoft.AspNetCore.Authentication;
@@ -204,35 +205,98 @@ public sealed class ComiteController(ServicioDictamen dictamen) : ControladorCor
 [Authorize(Policy = "Reportes")]
 public sealed class ReportesController(ServicioReportes reportes) : ControladorCore
 {
-    public static readonly IReadOnlyDictionary<string, string> Disponibles = new Dictionary<string, string>
+    /// <summary>Clave → (título, archivo RDLC).</summary>
+    public static readonly IReadOnlyDictionary<string, (string Titulo, string Rdlc)> Disponibles = new Dictionary<string, (string, string)>
     {
-        ["estado"] = "Expedientes por estado",
-        ["estadistica"] = "Estadística anonimizada",
-        ["ingresos"] = "Ingresos por tasas",
-        ["carnets"] = "Carnets emitidos",
-        ["indicadores"] = "Indicadores de tiempo de trámite"
+        ["estado"] = ("Expedientes por estado", "rptExpedientesPorEstado"),
+        ["estadistica"] = ("Estadística anonimizada", "rptEstadisticaAnonimizada"),
+        ["ingresos"] = ("Ingresos por tasas", "rptIngresos"),
+        ["carnets"] = ("Carnets emitidos", "rptCarnetsEmitidos"),
+        ["indicadores"] = ("Indicadores de tiempo de trámite", "rptIndicadoresTramite"),
+        ["transacciones"] = ("Transacciones registradas (bitácora)", "rptTransacciones")
     };
 
+    /// <summary>Vista previa en pantalla (tabla) del reporte elegido.</summary>
     [HttpGet]
     public async Task<IActionResult> Index(string? reporte, DateOnly? desde, DateOnly? hasta, CancellationToken ct)
     {
-        var d = desde ?? DateOnly.FromDateTime(DateTime.Today.AddDays(-30));
-        var h = hasta ?? DateOnly.FromDateTime(DateTime.Today);
+        var (d, h) = Rango(desde, hasta);
         ViewBag.Reporte = reporte;
         ViewBag.Desde = d;
         ViewBag.Hasta = h;
-
-        DataTable? tabla = reporte switch
-        {
-            "estado" => await reportes.ExpedientesPorEstadoAsync(Usuario, d, h, ct: ct),
-            "estadistica" => await reportes.EstadisticaAnonimizadaAsync(Usuario, d, h, ct),
-            "ingresos" => await reportes.IngresosAsync(Usuario, d, h, ct),
-            "carnets" => await reportes.CarnetsEmitidosAsync(Usuario, d, h, ct),
-            "indicadores" => await reportes.IndicadoresTramiteAsync(Usuario, d, h, ct),
-            _ => null
-        };
-        return View(tabla);
+        return View(reporte is null ? null : await DatosAsync(reporte, d, h, ct));
     }
+
+    /// <summary>GET /Reportes/Descargar?reporte=ingresos&amp;desde=...&amp;formato=Pdf|Excel → archivo RDLC.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Descargar(string reporte, DateOnly? desde, DateOnly? hasta, FormatoReporte formato, CancellationToken ct)
+    {
+        if (!Disponibles.TryGetValue(reporte, out var info)) return NotFound();
+        var (d, h) = Rango(desde, hasta);
+        var datos = await DatosAsync(reporte, d, h, ct);
+        var a = await reportes.ArchivoAsync(Usuario, info.Rdlc, datos!, formato, $"Del {d:dd/MM/yyyy} al {h:dd/MM/yyyy}", Ip, ct);
+        return File(a.Contenido, a.TipoContenido, a.NombreArchivo);
+    }
+
+    private async Task<DataTable?> DatosAsync(string reporte, DateOnly d, DateOnly h, CancellationToken ct) => reporte switch
+    {
+        "estado" => await reportes.ExpedientesPorEstadoAsync(Usuario, d, h, ct: ct),
+        "estadistica" => await reportes.EstadisticaAnonimizadaAsync(Usuario, d, h, ct),
+        "ingresos" => await reportes.IngresosAsync(Usuario, d, h, ct),
+        "carnets" => await reportes.CarnetsEmitidosAsync(Usuario, d, h, ct),
+        "indicadores" => await reportes.IndicadoresTramiteAsync(Usuario, d, h, ct),
+        "transacciones" => await reportes.TransaccionesAsync(Usuario, d, h, ct: ct),
+        _ => null
+    };
+
+    internal static (DateOnly, DateOnly) Rango(DateOnly? desde, DateOnly? hasta)
+        => (desde ?? DateOnly.FromDateTime(DateTime.Today.AddDays(-30)), hasta ?? DateOnly.FromDateTime(DateTime.Today));
+}
+
+// =====================================================================================================
+// Documentos: comprobante de cada transacción y documentos de las transacciones principales (todo el personal)
+// =====================================================================================================
+
+[Authorize(Policy = "Documentos")]
+public sealed class DocumentosController(ServicioReportes reportes) : ControladorCore
+{
+    /// <summary>"Mis transacciones" (el auditor y el administrador ven las de todos y pueden filtrar por usuario).</summary>
+    [HttpGet]
+    public async Task<IActionResult> Index(DateOnly? desde, DateOnly? hasta, string? usuario, CancellationToken ct)
+    {
+        var (d, h) = ReportesController.Rango(desde, hasta);
+        ViewBag.Desde = d;
+        ViewBag.Hasta = h;
+        ViewBag.UsuarioFiltro = usuario;
+        return View(await reportes.TransaccionesAsync(Usuario, d, h, usuario: usuario, ct: ct));
+    }
+
+    /// <summary>Comprobante de una transacción (cualquier operación registrada en la bitácora).</summary>
+    [HttpGet]
+    public async Task<IActionResult> Comprobante(long id, FormatoReporte formato, CancellationToken ct)
+        => Archivo(await reportes.ArchivoAsync(Usuario, "rptComprobanteTransaccion",
+            await reportes.ComprobanteTransaccionAsync(Usuario, id, ct), formato, $"Transacción N.º {id}", Ip, ct));
+
+    [HttpGet]
+    public async Task<IActionResult> Acuse(string id, FormatoReporte formato, CancellationToken ct)
+        => Archivo(await reportes.ArchivoAsync(Usuario, "rptAcuseSolicitud", await reportes.AcuseSolicitudAsync(Usuario, id, ct), formato, $"Trámite {id}", Ip, ct));
+
+    [HttpGet]
+    public async Task<IActionResult> Carnet(int id, FormatoReporte formato, CancellationToken ct)
+        => Archivo(await reportes.ArchivoAsync(Usuario, "rptCarnetEmitido", await reportes.CarnetEmitidoAsync(Usuario, id, ct), formato, null, Ip, ct));
+
+    [HttpGet]
+    public async Task<IActionResult> Recibo(string id, FormatoReporte formato, CancellationToken ct)
+        => Archivo(await reportes.ArchivoAsync(Usuario, "rptReciboPago", await reportes.ReciboPagoAsync(Usuario, id, ct), formato, $"Orden {id}", Ip, ct));
+
+    [HttpGet]
+    public async Task<IActionResult> Valoracion(int id, FormatoReporte formato, CancellationToken ct)
+        => Archivo(await reportes.ArchivoAsync(Usuario, "rptInformeValoracion", await reportes.InformeValoracionAsync(Usuario, id, ct), formato,
+            $"Evaluación N.º {id}", Ip, ct));
+
+    /// <summary>PDF se muestra en el navegador (se puede imprimir); Excel se descarga.</summary>
+    private FileContentResult Archivo(ArchivoReporte a)
+        => a.TipoContenido == "application/pdf" ? File(a.Contenido, a.TipoContenido) : File(a.Contenido, a.TipoContenido, a.NombreArchivo);
 }
 
 // =====================================================================================================

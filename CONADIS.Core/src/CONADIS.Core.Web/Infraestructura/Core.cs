@@ -32,7 +32,9 @@ public static class Menu
         new("Auditoria", "Auditoría", "Auditoria", "Bitácora de acciones y verificación de integridad.",
             [Roles.Auditor, Roles.Administrador]),
         new("Administracion", "Administración", "Administracion", "Usuarios y roles del personal.",
-            [Roles.Administrador])
+            [Roles.Administrador]),
+        new("Documentos", "Mis transacciones", "Documentos", "Todo lo que usted registró, con el comprobante de cada transacción.",
+            [Roles.AnalistaRegistro, Roles.SupervisorRegistro, Roles.Evaluador, Roles.Comite, Roles.Auditor, Roles.Administrador])
     ];
 
     public static IEnumerable<(string Area, string[] Roles)> Permisos => Opciones.Select(o => (o.Area, o.Roles));

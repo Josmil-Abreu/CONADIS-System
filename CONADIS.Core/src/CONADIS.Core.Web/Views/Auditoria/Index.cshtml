@@ -21,11 +21,11 @@
     }
 }
 <table class="table table-striped bg-white tabla-compacta small">
-    <thead><tr><th>Fecha</th><th>Usuario</th><th>IP</th><th>Acción</th><th>Entidad</th><th>Detalle</th></tr></thead>
+    <thead><tr><th>N.º</th><th>Fecha</th><th>Usuario</th><th>IP</th><th>Acción</th><th>Entidad</th><th>Detalle</th><th>Comprobante</th></tr></thead>
     <tbody>
     @foreach (var e in Model)
     {
-        <tr><td>@e.Fecha.LocalDateTime.ToString("dd/MM/yyyy HH:mm:ss")</td><td>@e.Usuario</td><td>@e.Ip</td><td>@e.Accion</td><td>@e.Entidad @e.EntidadId</td><td>@e.Detalle</td></tr>
+        <tr><td>@e.EventoId</td><td>@e.Fecha.LocalDateTime.ToString("dd/MM/yyyy HH:mm:ss")</td><td>@e.Usuario</td><td>@e.Ip</td><td>@e.Accion</td><td>@e.Entidad @e.EntidadId</td><td>@e.Detalle</td><td><a asp-controller="Documentos" asp-action="Comprobante" asp-route-id="@e.EventoId" target="_blank">PDF</a></td></tr>
     }
     </tbody>
 </table>

@@ -21,10 +21,17 @@
     <PackageReference Include="log4net" Version="3.5.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
+    <!-- Reportes RDLC en .NET moderno (el ReportViewer clásico solo existe para .NET Framework) -->
+    <PackageReference Include="ReportViewerCore.NETCore" Version="15.1.22" />
   </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="CONADIS.Core.Pruebas" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Los diseños .rdlc viajan dentro de la DLL: GeneradorReportes los lee como recurso incrustado -->
+    <EmbeddedResource Include="Reportes\*.rdlc" />
   </ItemGroup>
 
 </Project>
