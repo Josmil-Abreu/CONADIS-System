@@ -3,6 +3,7 @@ using System.Text.Json;
 using CONADIS.Caja.Negocio.Datos;
 using CONADIS.Caja.Negocio.Externos;
 using CONADIS.Caja.Negocio.Modelos;
+using CONADIS.Caja.Negocio.Reportes;
 using CONADIS.Caja.Negocio.Seguridad;
 using Microsoft.Extensions.Logging;
 
@@ -383,9 +384,15 @@ public sealed class SincronizadorCaja(EjecutorSp db, ClienteIntegracionCaja inte
             [Parametro.Guid("@TransaccionId", tx), Parametro.Texto("@Estado", estado, 12), Parametro.Texto("@Error", error, 500)], ct);
 }
 
-/// <summary>Reportes de caja (DataTable para enlazar a grillas o a un ReportViewer).</summary>
+/// <summary>
+/// Reportes de la caja (RDLC → PDF o Excel). Cada transacción tiene su reporte:
+/// los cobros y notas de crédito, su e-CF impreso; el cierre, su reporte de cierre; y cualquier evento
+/// de la bitácora (apertura, cobro, cierre...), su comprobante. Generar un reporte también queda en la bitácora.
+/// </summary>
 public sealed class ServicioReportesCaja(EjecutorSp db)
 {
+    private const string Modulo = "Módulo de Caja";
+
     /// <summary>Tablas: [0] encabezado de la sesión, [1] totales por medio de pago, [2] totales por servicio.</summary>
     public Task<DataSet> CierreCajaAsync(int sesionId, CancellationToken ct = default)
         => db.ConsultarVariosAsync("caja.ppRptCierreCaja", [Parametro.Entero("@SesionId", sesionId)], ct);
@@ -394,5 +401,67 @@ public sealed class ServicioReportesCaja(EjecutorSp db)
     {
         if (desde > hasta) throw new ReglaNegocioException(58018, "La fecha inicial no puede ser mayor que la final.");
         return db.ConsultarAsync("caja.ppRptIngresos", [Parametro.Fecha("@Desde", desde), Parametro.Fecha("@Hasta", hasta)], ct);
+    }
+
+    // ------------------------------------------------------------------ archivos
+
+    /// <summary>e-CF impreso (factura o nota de crédito). Se usa al cobrar y para reimprimir.</summary>
+    public async Task<ArchivoReporte> FacturaAsync(UsuarioCaja u, long facturaId, FormatoReporte formato = FormatoReporte.Pdf, CancellationToken ct = default)
+    {
+        var ds = await db.ConsultarVariosAsync("caja.ppRptFactura", [Parametro.EnteroLargo("@FacturaId", facturaId)], ct);
+        var encf = ds.Tables[0].Rows[0].Texto("Encf");
+        return await ArchivoAsync(u, "rptFactura", formato, $"e-NCF {encf}", ct,
+            ("Encabezado", ds.Tables[0]), ("Lineas", ds.Tables[1]), ("Pagos", ds.Tables[2]));
+    }
+
+    public async Task<ArchivoReporte> CierreAsync(UsuarioCaja u, int sesionId, FormatoReporte formato = FormatoReporte.Pdf, CancellationToken ct = default)
+    {
+        var ds = await CierreCajaAsync(sesionId, ct);
+        if (ds.Tables[0].Rows.Count == 0) throw new ReglaNegocioException(58023, "La sesión de caja indicada no existe.");
+        return await ArchivoAsync(u, "rptCierreCaja", formato, $"Sesión {sesionId}", ct,
+            ("Sesion", ds.Tables[0]), ("MediosPago", ds.Tables[1]), ("Servicios", ds.Tables[2]));
+    }
+
+    /// <summary>Ingresos por servicio (solo supervisor o administrador).</summary>
+    public async Task<ArchivoReporte> IngresosArchivoAsync(UsuarioCaja u, DateOnly desde, DateOnly hasta, FormatoReporte formato = FormatoReporte.Pdf,
+        CancellationToken ct = default)
+    {
+        ExigirSupervisor(u);
+        return await ArchivoAsync(u, "rptIngresosCaja", formato, $"Del {desde:dd/MM/yyyy} al {hasta:dd/MM/yyyy}", ct, ("Datos", await IngresosAsync(desde, hasta, ct)));
+    }
+
+    /// <summary>Transacciones del período: el supervisor ve las de todos; el cajero, solo las suyas.</summary>
+    public Task<DataTable> TransaccionesAsync(UsuarioCaja u, DateOnly desde, DateOnly hasta, CancellationToken ct = default)
+        => db.ConsultarAsync("caja.ppRptTransacciones",
+        [
+            Parametro.Fecha("@Desde", desde), Parametro.Fecha("@Hasta", hasta),
+            Parametro.Texto("@Usuario", u.EsSupervisor ? null : u.Username, 50)
+        ], ct);
+
+    public async Task<ArchivoReporte> TransaccionesArchivoAsync(UsuarioCaja u, DateOnly desde, DateOnly hasta, FormatoReporte formato = FormatoReporte.Pdf,
+        CancellationToken ct = default)
+        => await ArchivoAsync(u, "rptTransaccionesCaja", formato, $"Del {desde:dd/MM/yyyy} al {hasta:dd/MM/yyyy}", ct,
+            ("Datos", await TransaccionesAsync(u, desde, hasta, ct)));
+
+    /// <summary>Comprobante de una transacción de la bitácora (el cajero solo los suyos).</summary>
+    public async Task<ArchivoReporte> ComprobanteAsync(UsuarioCaja u, long eventoId, FormatoReporte formato = FormatoReporte.Pdf, CancellationToken ct = default)
+    {
+        var t = await db.ConsultarAsync("caja.ppRptComprobanteTransaccion", [Parametro.EnteroLargo("@EventoId", eventoId)], ct);
+        if (!u.EsSupervisor && !string.Equals(t.Rows[0].Texto("Usuario"), u.Username, StringComparison.OrdinalIgnoreCase))
+            throw new ReglaNegocioException(58024, "Solo puede imprimir el comprobante de sus propias transacciones.");
+        return await ArchivoAsync(u, "rptComprobanteTransaccionCaja", formato, $"Transacción N.º {eventoId}", ct, ("Datos", t));
+    }
+
+    private async Task<ArchivoReporte> ArchivoAsync(UsuarioCaja u, string reporte, FormatoReporte formato, string filtros, CancellationToken ct,
+        params (string, DataTable)[] datos)
+    {
+        var archivo = GeneradorReportes.Generar(reporte, new EncabezadoReporte(Modulo, $"{u.NombreCompleto} ({u.Username})", filtros), formato, datos);
+        await Eventos.RegistrarAsync(db, u.Username, "ReporteGenerado", $"{reporte} · {formato} · {filtros}", ct);
+        return archivo;
+    }
+
+    private static void ExigirSupervisor(UsuarioCaja u)
+    {
+        if (!u.EsSupervisor) throw new ReglaNegocioException(58011, "Este reporte es solo para supervisores de caja.");
     }
 }

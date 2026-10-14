@@ -3,6 +3,7 @@ using System.Text;
 using CONADIS.Caja.Negocio.Datos;
 using CONADIS.Caja.Negocio.Externos;
 using CONADIS.Caja.Negocio.Modelos;
+using CONADIS.Caja.Negocio.Reportes;
 using CONADIS.Caja.Negocio.Servicios;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -170,6 +171,18 @@ public class ClienteIntegracionCajaPruebas
     }
 }
 
+/// <summary>Reportes RDLC incrustados en la biblioteca de la caja.</summary>
+public class ReportesCajaPruebas
+{
+    [Fact]
+    public void Los_rdlc_de_la_caja_estan_incrustados()
+    {
+        var disponibles = GeneradorReportes.Disponibles().ToList();
+        foreach (var r in new[] { "rptFactura", "rptCierreCaja", "rptIngresosCaja", "rptTransaccionesCaja", "rptComprobanteTransaccionCaja" })
+            Assert.Contains(r, disponibles);
+    }
+}
+
 /// <summary>Estado de la aplicación y sincronización periódica (sin base de datos).</summary>
 public class AplicacionCajaPruebas
 {
@@ -300,8 +313,22 @@ public class CajaBaseDatosPruebas
         var cierre = await sesiones.CerrarAsync(sesion.SesionId, supervisor, null, "Prueba automática");
         Assert.Equal(0m, cierre.DiferenciaTotal);
 
-        var rpt = await new ServicioReportesCaja(_db).CierreCajaAsync(sesion.SesionId);
+        var reportes = new ServicioReportesCaja(_db);
+        var rpt = await reportes.CierreCajaAsync(sesion.SesionId);
         Assert.Equal(3, rpt.Tables.Count);
+
+        // Cada transacción tiene su reporte: e-CF del cobro y de la nota de crédito, cierre y comprobantes de la bitácora
+        Assert.True((await reportes.FacturaAsync(supervisor, emitido.FacturaId)).Contenido.Length > 0);
+        Assert.True((await reportes.FacturaAsync(supervisor, nota.FacturaId)).Contenido.Length > 0);
+        Assert.True((await reportes.CierreAsync(supervisor, sesion.SesionId)).Contenido.Length > 0);
+        var hoy = DateOnly.FromDateTime(DateTime.Today);
+        var transacciones = await reportes.TransaccionesAsync(supervisor, hoy, hoy);
+        Assert.True(transacciones.Rows.Count > 0);
+        var eventoId = Convert.ToInt64(transacciones.Rows[transacciones.Rows.Count - 1]["EventoId"]);
+        Assert.True((await reportes.ComprobanteAsync(supervisor, eventoId)).Contenido.Length > 0);
+        Assert.True((await reportes.TransaccionesArchivoAsync(cajero, hoy, hoy, FormatoReporte.Excel)).Contenido.Length > 0);
+        Assert.True((await reportes.IngresosArchivoAsync(supervisor, hoy, hoy)).Contenido.Length > 0);
+        await Assert.ThrowsAsync<ReglaNegocioException>(() => reportes.IngresosArchivoAsync(cajero, hoy, hoy));
     }
 
     [Fact]

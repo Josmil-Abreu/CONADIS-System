@@ -16,12 +16,15 @@ public sealed class FormPrincipal : Form
     private readonly ServicioSesiones _sesiones;
     private readonly ServicioCobro _cobro;
     private readonly SincronizacionPeriodica _sincronizacion;
+    private readonly ServicioReportesCaja _reportesCaja;
 
     private readonly Button _abrirCaja = Ui.Boton("Abrir caja");
     private readonly Button _cobrar = Ui.Boton("Cobrar");
     private readonly Button _arqueo = Ui.Boton("Arqueo y cierre");
     private readonly Button _sincronizar = Ui.Boton("Sincronizar ahora");
     private readonly Button _salir = Ui.Boton("Cerrar sesión");
+    private readonly Button _imprimir = Ui.Boton("Imprimir comprobante");
+    private readonly Button _reportes = Ui.Boton("Reportes y transacciones", 200);
 
     private readonly DataGridView _comprobantes = new()
     {
@@ -38,8 +41,9 @@ public sealed class FormPrincipal : Form
     public bool VolverAlLogin { get; private set; }
 
     public FormPrincipal(IServiceProvider servicios, ContextoCaja contexto, ServicioSesiones sesiones, ServicioCobro cobro,
-        SincronizacionPeriodica sincronizacion)
+        SincronizacionPeriodica sincronizacion, ServicioReportesCaja reportesCaja)
     {
+        _reportesCaja = reportesCaja;
         _servicios = servicios;
         _contexto = contexto;
         _sesiones = sesiones;
@@ -52,7 +56,7 @@ public sealed class FormPrincipal : Form
         Font = Ui.Normal;
 
         var barraBotones = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(12) };
-        barraBotones.Controls.AddRange(new Control[] { _abrirCaja, _cobrar, _arqueo, _sincronizar, _salir });
+        barraBotones.Controls.AddRange(new Control[] { _abrirCaja, _cobrar, _imprimir, _arqueo, _reportes, _sincronizar, _salir });
 
         var titulo = new Label
         {
@@ -74,6 +78,14 @@ public sealed class FormPrincipal : Form
         _abrirCaja.Click += (_, _) => AbrirCaja();
         _cobrar.Click += async (_, _) => await Ui.EjecutarAsync(_cobrar, CobrarAsync);
         _arqueo.Click += async (_, _) => await Ui.EjecutarAsync(_arqueo, ArqueoAsync);
+        // Reimprimir el e-CF del comprobante seleccionado (doble clic también lo imprime)
+        _imprimir.Click += async (_, _) => await Ui.EjecutarAsync(_imprimir, ImprimirSeleccionadoAsync);
+        _comprobantes.CellDoubleClick += async (_, e) => { if (e.RowIndex >= 0) await Ui.EjecutarAsync(_imprimir, ImprimirSeleccionadoAsync); };
+        _reportes.Click += (_, _) =>
+        {
+            using var form = _servicios.GetRequiredService<FormReportes>();
+            form.ShowDialog(this);
+        };
         _sincronizar.Click += async (_, _) => await Ui.EjecutarAsync(_sincronizar, () => _sincronizacion.SincronizarAhoraAsync());
         _salir.Click += (_, _) =>
         {
@@ -113,6 +125,7 @@ public sealed class FormPrincipal : Form
     ///  2. Mostrar las tasas de _cobro.TasasAsync() y calcular el total con ReglasCobro.Calcular(...).
     ///  3. Armar un SolicitudCobro (cliente, líneas, medio de pago, monto recibido / autorización / referencia).
     ///  4. Llamar _cobro.CobrarAsync(_contexto.SesionActual, _contexto.UsuarioActual, solicitud) y mostrar el e-CF devuelto.
+    ///  5. Imprimir el comprobante: Ui.Abrir(await _reportesCaja.FacturaAsync(_contexto.UsuarioActual, emitido.FacturaId)).
     /// </summary>
     private async Task CobrarAsync()
     {
@@ -127,7 +140,7 @@ public sealed class FormPrincipal : Form
     ///  1. Pedir lo contado por medio de pago (sin mostrar lo esperado) y llamar _sesiones.ArquearAsync(...).
     ///  2. Mostrar el ResultadoArqueo; si hay diferencias, pedir la justificación.
     ///  3. Pedir usuario y contraseña del supervisor (ServicioAutenticacionCaja.AutorizarSupervisorAsync)
-    ///     y llamar _sesiones.CerrarAsync(...). Luego ServicioReportesCaja.CierreCajaAsync(sesionId) para el reporte.
+    ///     y llamar _sesiones.CerrarAsync(...). Luego Ui.Abrir(await _reportesCaja.CierreAsync(usuario, sesionId)) imprime el cierre.
     /// </summary>
     private async Task ArqueoAsync()
     {
@@ -135,6 +148,17 @@ public sealed class FormPrincipal : Form
         MessageBox.Show(this, "La pantalla de arqueo y cierre está pendiente. Ver el comentario de FormPrincipal.ArqueoAsync.",
             Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
         await Task.CompletedTask;
+    }
+
+    /// <summary>Representación impresa del e-CF seleccionado (cobro o nota de crédito).</summary>
+    private async Task ImprimirSeleccionadoAsync()
+    {
+        if (_comprobantes.CurrentRow?.DataBoundItem is not ComprobanteResumen c)
+        {
+            MessageBox.Show(this, "Seleccione un comprobante de la lista.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        Ui.Abrir(await _reportesCaja.FacturaAsync(_contexto.UsuarioActual, c.FacturaId));
     }
 
     private async Task RefrescarComprobantesAsync()
@@ -156,6 +180,7 @@ public sealed class FormPrincipal : Form
         _estadoCaja.Text = _contexto.Sesion is { } s ? $"  |  {s.CajaCodigo} · {s.Sucursal} · {s.Estado}" : "  |  Caja cerrada";
         _abrirCaja.Enabled = _contexto.Sesion is null;
         _cobrar.Enabled = _contexto.PuedeCobrar;
+        _imprimir.Enabled = _contexto.Sesion is not null;
         _arqueo.Enabled = _contexto.Sesion is not null;
     }
 

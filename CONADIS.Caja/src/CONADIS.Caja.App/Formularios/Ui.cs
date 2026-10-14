@@ -1,5 +1,7 @@
 using CONADIS.Caja.Negocio.Datos;
 using CONADIS.Caja.Negocio.Externos;
+using CONADIS.Caja.Negocio.Reportes;
+using System.Diagnostics;
 
 namespace CONADIS.Caja.App.Formularios;
 
@@ -47,6 +49,16 @@ internal static class Ui
             Cursor.Current = cursor;
             boton.Enabled = true;
         }
+    }
+
+    /// <summary>Guarda el reporte en la carpeta temporal y lo abre con el programa predeterminado (visor de PDF o Excel).</summary>
+    public static void Abrir(ArchivoReporte archivo)
+    {
+        var carpeta = Path.Combine(Path.GetTempPath(), "CONADIS-Caja");
+        Directory.CreateDirectory(carpeta);
+        var ruta = Path.Combine(carpeta, archivo.NombreArchivo);
+        File.WriteAllBytes(ruta, archivo.Contenido);
+        Process.Start(new ProcessStartInfo(ruta) { UseShellExecute = true });
     }
 
     public static Label Etiqueta(string texto) => new() { Text = texto, AutoSize = true, Font = Normal, Margin = new Padding(0, 8, 0, 2) };
