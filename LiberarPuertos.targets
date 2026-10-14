@@ -1,0 +1,13 @@
+<Project>
+  <!--
+    Antes de compilar un proyecto web de CONADIS (Core.Api, Core.Web, Integracion.Api, Web), cierra los procesos
+    de CONADIS que hayan quedado vivos de una ejecución anterior ocupando los puertos 7101-7103, 7122 y sus http.
+    Así F5 en CONADIS.Todo.slnx no falla con "no se puede acceder a localhost" ni con archivos bloqueados.
+    Solo en Windows; si algo falla, la compilación sigue igual. Se puede desactivar con -p:LiberarPuertos=false.
+  -->
+  <Target Name="LiberarPuertosConadis" BeforeTargets="BeforeBuild"
+          Condition="'$(OS)' == 'Windows_NT' And '$(LiberarPuertos)' != 'false' And '$(DesignTimeBuild)' != 'true'">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)liberar-puertos.ps1&quot;"
+          ContinueOnError="true" IgnoreExitCode="true" />
+  </Target>
+</Project>

@@ -21,4 +21,5 @@
     </None>
   </ItemGroup>
 
+  <Import Project="$(MSBuildThisFileDirectory)..\..\..\LiberarPuertos.targets" />
 </Project>
