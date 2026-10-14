@@ -1,2 +1,0 @@
-document.querySelectorAll('button[data-confirm]').forEach(button=>button.addEventListener('click',event=>{if(!window.confirm(button.dataset.confirm))event.preventDefault();}));
-document.querySelectorAll('form[method="post"]').forEach(form=>form.addEventListener('submit',()=>{if(form.checkValidity())setTimeout(()=>{form.querySelectorAll('button').forEach(button=>button.disabled=true);},0);}));

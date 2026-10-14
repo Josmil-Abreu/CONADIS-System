@@ -426,3 +426,13 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# --- CONADIS: compilación, logs y datos locales ---
+[Bb]in/
+[Oo]bj/
+[Ll]ogs/
+*.db
+*.db-shm
+*.db-wal
+*.mdf
+*.ldf
