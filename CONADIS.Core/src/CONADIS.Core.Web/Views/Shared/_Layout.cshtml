@@ -42,5 +42,19 @@
     </main>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <div id="aviso-sesion" class="alert alert-warning position-fixed bottom-0 end-0 m-3 shadow d-none" role="alertdialog" aria-live="assertive" style="z-index:2000;max-width:360px">
+        Su sesión se cerrará en 2 minutos por inactividad.
+        <button type="button" class="btn btn-sm btn-primary ms-2" onclick="location.reload()">Seguir conectado</button>
+    </div>
+    <script>
+        (function () {
+            var minutos = 15;
+            setTimeout(function () { document.getElementById('aviso-sesion').classList.remove('d-none'); }, (minutos - 2) * 60000);
+            setTimeout(function () { location.href = '/Cuenta/IniciarSesion'; }, minutos * 60000 + 5000);
+        })();
+    </script>
+}
 </body>
 </html>

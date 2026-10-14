@@ -54,7 +54,7 @@ builder.Services
         o.LoginPath = "/Cuenta/IniciarSesion";
         o.LogoutPath = "/Cuenta/CerrarSesion";
         o.AccessDeniedPath = "/Cuenta/AccesoDenegado";
-        o.ExpireTimeSpan = TimeSpan.FromMinutes(30);   // RNF-SEG: sesión inactiva se cierra a los 30 minutos
+        o.ExpireTimeSpan = TimeSpan.FromMinutes(15);   // RNF-SEG: sesión inactiva se cierra a los 15 minutos
         o.SlidingExpiration = true;
         o.Cookie.HttpOnly = true;
         o.Cookie.SecurePolicy = CookieSecurePolicy.Always;
@@ -67,6 +67,8 @@ builder.Services.AddAuthorization(o =>
 
 builder.Services.AddControllersWithViews(o => o.Filters.Add<FiltroErroresCore>());
 
+builder.Services.AgregarLimitePeticiones();
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -76,10 +78,12 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UsarCabecerasSeguridad();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapControllerRoute(name: "default", pattern: "{controller=Inicio}/{action=Index}/{id?}");
 
