@@ -29,6 +29,9 @@
     <ProjectReference Include="..\CONADIS.Core\src\CONADIS.Core.Negocio\CONADIS.Core.Negocio.csproj" />
     <ProjectReference Include="..\CONADIS.Web\src\CONADIS.Web.Negocio\CONADIS.Web.Negocio.csproj" />
     <ProjectReference Include="..\CONADIS.Caja\src\CONADIS.Caja.Negocio\CONADIS.Caja.Negocio.csproj" />
+    <!-- El Inicio abre CONADIS.Caja.App.exe desde su carpeta bin: esta referencia hace que F5 la recompile siempre
+         (sin ella, Visual Studio no la compila por no ser proyecto de inicio y se abre una versión vieja). -->
+    <ProjectReference Include="..\CONADIS.Caja\src\CONADIS.Caja.App\CONADIS.Caja.App.csproj" ReferenceOutputAssembly="false" Private="false" />
   </ItemGroup>
 
   <ItemGroup>
