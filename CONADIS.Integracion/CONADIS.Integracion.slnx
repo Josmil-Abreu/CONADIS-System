@@ -8,6 +8,7 @@
     <File Path="BaseDatos/06_DatosIniciales.sql" />
     <File Path="BaseDatos/07_PermisosAplicacion.sql" />
     <File Path="BaseDatos/08_Procedimientos_Reportes.sql" />
+    <File Path="BaseDatos/09_Tolerancia_Fallos.sql" />
     <File Path="BaseDatos/99_PruebaIntegracion.sql" />
   </Folder>
   <Folder Name="/src/">

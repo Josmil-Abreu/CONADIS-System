@@ -81,7 +81,23 @@ public class BaseDatosPruebas
 
         // Los demás mensajes tomados por esta prueba se devuelven a la cola
         foreach (var m in tomados.Where(m => m.MensajeId != encolado.MensajeId))
-            await cola.RegistrarFalloAsync(m.MensajeId, "devuelto por la prueba");
+            await cola.RegistrarFalloAsync(m.MensajeId, "devuelto por la prueba", transitorio: true);
+    }
+
+    [Fact]
+    public async Task Un_destino_caido_nunca_da_el_mensaje_por_perdido_y_reintenta_pronto()
+    {
+        var cola = new RepositorioMensajes(_db);
+        var encolado = await cola.EncolarAsync("Prueba.Tipo", "SMS", "{\"prueba\":true}", "PRUEBA-" + Guid.NewGuid().ToString("N"));
+        var trabajador = "prueba-" + Guid.NewGuid().ToString("N")[..8];
+        var tomados = await cola.TomarAsync(trabajador, 500, destino: "SMS");
+
+        var fallo = await cola.RegistrarFalloAsync(encolado.MensajeId, "SMS no disponible", transitorio: true);
+        Assert.Equal(EstadosMensaje.Pendiente, fallo.Estado);
+        Assert.True(fallo.ProximoIntento <= DateTimeOffset.Now.AddSeconds(31), "Con el destino caído se reintenta cada 30 s como máximo.");
+
+        foreach (var m in tomados.Where(m => m.MensajeId != encolado.MensajeId))
+            await cola.RegistrarFalloAsync(m.MensajeId, "devuelto por la prueba", transitorio: true);
     }
 
     [Fact]

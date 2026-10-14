@@ -32,12 +32,14 @@ public sealed class RepositorioMensajes(EjecutorSp db)
     public Task CompletarAsync(long mensajeId, CancellationToken ct = default)
         => db.EjecutarAsync("integ.ppMensaje_Completar", [Parametro.EnteroLargo("@MensajeId", mensajeId)], ct);
 
-    public async Task<ResultadoFallo> RegistrarFalloAsync(long mensajeId, string error, bool permanente = false, CancellationToken ct = default)
+    /// <param name="transitorio">true si el destino está caído: el mensaje nunca pasa a Fallido y se reintenta cada 30 s como máximo.</param>
+    public async Task<ResultadoFallo> RegistrarFalloAsync(long mensajeId, string error, bool permanente = false, CancellationToken ct = default,
+        bool transitorio = false)
     {
         var f = (await db.ConsultarAsync("integ.ppMensaje_RegistrarFallo",
         [
             Parametro.EnteroLargo("@MensajeId", mensajeId), Parametro.Texto("@Error", RepositorioBitacora.Cortar(error, 1000), 1000),
-            Parametro.Booleano("@Permanente", permanente)
+            Parametro.Booleano("@Permanente", permanente), Parametro.Booleano("@Transitorio", transitorio)
         ], ct)).Rows[0];
         return new ResultadoFallo(f.Texto("Estado"), f.Entero("Intentos"), f.FechaHora("ProximoIntento"));
     }

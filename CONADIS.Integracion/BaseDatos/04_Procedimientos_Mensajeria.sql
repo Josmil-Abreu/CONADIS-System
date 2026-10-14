@@ -127,10 +127,13 @@ GO
 
 -- Fallo al entregar: se reprograma con espera creciente (30 s, 60 s, 120 s... hasta 1 hora).
 -- @Permanente = 1 (ej.: el destino rechazó los datos) o intentos agotados -> Fallido + alerta.
+-- @Transitorio = 1 (el destino está caído): NUNCA pasa a Fallido y la espera no supera
+--   OutboxSegundosMaximoTransitorio (30 s): en cuanto el destino vuelve, el mensaje se entrega solo.
 CREATE OR ALTER PROCEDURE integ.ppMensaje_RegistrarFallo
     @MensajeId   BIGINT,
     @Error       NVARCHAR(1000),
-    @Permanente  BIT = 0
+    @Permanente  BIT = 0,
+    @Transitorio BIT = 0
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -139,6 +142,8 @@ BEGIN
     DECLARE @Intentos INT, @MaxIntentos INT, @Tipo VARCHAR(60), @Destino VARCHAR(20);
     DECLARE @Base INT = ISNULL(TRY_CAST((SELECT Valor FROM cfg.Parametro WHERE Clave = 'OutboxSegundosBase') AS INT), 30);
     DECLARE @Tope INT = ISNULL(TRY_CAST((SELECT Valor FROM cfg.Parametro WHERE Clave = 'OutboxSegundosMaximo') AS INT), 3600);
+    IF @Transitorio = 1
+        SET @Tope = ISNULL(TRY_CAST((SELECT Valor FROM cfg.Parametro WHERE Clave = 'OutboxSegundosMaximoTransitorio') AS INT), 30);
 
     SELECT @Intentos = Intentos, @MaxIntentos = MaxIntentos, @Tipo = Tipo, @Destino = Destino
     FROM integ.Mensaje
@@ -148,7 +153,7 @@ BEGIN
         THROW 56011, N'El mensaje no existe o no está en proceso.', 1;
 
     BEGIN TRANSACTION;
-        IF @Permanente = 1 OR @Intentos >= @MaxIntentos
+        IF @Permanente = 1 OR (@Intentos >= @MaxIntentos AND @Transitorio = 0)
         BEGIN
             UPDATE integ.Mensaje
             SET Estado = 'Fallido', UltimoError = LEFT(@Error, 1000), BloqueadoPor = NULL, BloqueadoHasta = NULL

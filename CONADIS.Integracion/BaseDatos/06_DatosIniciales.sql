@@ -31,6 +31,7 @@ USING (VALUES
     ('OutboxIntentosMaximos',         N'8',    N'Intentos de entrega de un mensaje antes de marcarlo Fallido.'),
     ('OutboxSegundosBase',            N'30',   N'Espera tras el primer fallo; se duplica en cada intento.'),
     ('OutboxSegundosMaximo',          N'3600', N'Espera máxima entre reintentos (1 hora).'),
+    ('OutboxSegundosMaximoTransitorio', N'30', N'Espera máxima entre reintentos cuando el destino está caído (fallo transitorio).'),
     ('IdempotenciaHorasVigencia',     N'24',   N'Horas que se recuerda una Idempotency-Key (RIC-05).'),
     ('LoginIntentosMaximos',          N'5',    N'Intentos fallidos antes de bloquear a un operador.'),
     ('LoginMinutosBloqueo',           N'15',   N'Minutos de bloqueo de un operador.'),

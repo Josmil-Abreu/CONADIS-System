@@ -63,7 +63,8 @@ public sealed class ProcesadorCola(RepositorioMensajes mensajes, RepositorioPago
 
         if (!llamada.Exito)
         {
-            var fallo = await mensajes.RegistrarFalloAsync(m.MensajeId, $"Core no disponible: {llamada.Error}", ct: ct);
+            // Core caído = fallo transitorio: el pago no se da por perdido; se reintenta hasta que el Core vuelva.
+            var fallo = await mensajes.RegistrarFalloAsync(m.MensajeId, $"Core no disponible: {llamada.Error}", ct: ct, transitorio: true);
             Log.Warn($"Pago {pago.TransaccionId}: Core no disponible; reintento a las {fallo.ProximoIntento:HH:mm:ss} ({fallo.Estado}).");
             return;
         }
