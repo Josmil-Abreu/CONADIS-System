@@ -18,6 +18,28 @@
         <button class="btn btn-success">Emitir carnet</button>
     </form>
 }
+@if (ViewBag.Centros is List<CentroValoracion> centros && c.Estado is "Solicitado" or "EnEvaluacion" or "EnApelacion")
+{
+    var cupos = (List<CupoDisponible>)ViewBag.Cupos;
+    <div class="tarjeta mb-3">
+        <h2 class="h5">Asignar cita de valoración</h2>
+        @if (cupos.Count > 0)
+        {
+            <p class="small text-muted mb-2">Cupos libres (@(c.Centro ?? centros.First().Nombre)):
+                @string.Join(" · ", cupos.Where(x => x.CuposLibres > 0).Take(8).Select(x => $"{x.Fecha:dd/MM} ({x.CuposLibres})"))</p>
+        }
+        <form asp-action="AsignarCita" method="post" class="row g-2 align-items-end">
+            <input type="hidden" name="id" value="@c.ExpedienteId" />
+            <div class="col-md-4"><label class="form-label" for="centroId">Centro</label>
+                <select class="form-select" id="centroId" name="centroId">@foreach (var ce in centros) { <option value="@ce.CentroId" selected="@(ce.CentroId == c.CentroId)">@ce.Nombre</option> }</select></div>
+            <div class="col-md-4"><label class="form-label" for="fechaHora">Fecha y hora</label>
+                <input class="form-control" type="datetime-local" id="fechaHora" name="fechaHora" required /></div>
+            <div class="col-md-2"><div class="form-check"><input class="form-check-input" type="checkbox" id="domiciliaria" name="domiciliaria" value="true" />
+                <label class="form-check-label" for="domiciliaria">Domiciliaria</label></div></div>
+            <div class="col-md-2"><button class="btn btn-primary">Asignar</button></div>
+        </form>
+    </div>
+}
 <div class="row g-3">
     <div class="col-lg-6"><div class="tarjeta">
         <h2 class="h5">Datos</h2>
@@ -49,7 +71,19 @@
         <h2 class="h5">Citas, evaluaciones y carnets</h2>
         @foreach (var x in Model.Citas) { <p class="small mb-1">Cita: @x.FechaHora.LocalDateTime.ToString("dd/MM/yyyy HH:mm") · @x.Centro · @x.Estado</p> }
         @foreach (var x in Model.Evaluaciones) { <p class="small mb-1">Evaluación @x.EvaluacionId: @x.Estado · WHODAS @x.PuntajeWhodas · @x.GradoPropuesto @x.TipoPropuesto · @x.Dictamen · <a asp-controller="Documentos" asp-action="Valoracion" asp-route-id="@x.EvaluacionId" target="_blank">Informe (PDF)</a></p> }
-        @foreach (var x in Model.Carnets) { <p class="small mb-1">Carnet @x.NumeroCarnet · @x.Estado · vence @(x.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "permanente") · <a asp-controller="Documentos" asp-action="Carnet" asp-route-id="@x.CarnetId" target="_blank">Certificado (PDF)</a></p> }
+        @foreach (var x in Model.Carnets)
+        {
+            <p class="small mb-1">Carnet @x.NumeroCarnet · @x.Estado · vence @(x.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "permanente") · <a asp-controller="Documentos" asp-action="Carnet" asp-route-id="@x.CarnetId" target="_blank">Certificado (PDF)</a></p>
+            @if (x.Estado == "Vigente" && User.IsInRole(Roles.SupervisorRegistro))
+            {
+                <form asp-action="AnularCarnet" method="post" class="d-flex gap-2 mb-2">
+                    <input type="hidden" name="id" value="@c.ExpedienteId" /><input type="hidden" name="carnetId" value="@x.CarnetId" />
+                    <label class="visually-hidden" for="mot@(x.CarnetId)">Motivo de anulación</label>
+                    <input id="mot@(x.CarnetId)" name="motivo" class="form-control form-control-sm" placeholder="Motivo (mín. 10 caracteres)" required minlength="10" />
+                    <button class="btn btn-sm btn-outline-danger">Anular</button>
+                </form>
+            }
+        }
         @foreach (var x in Model.Ordenes) { <p class="small mb-1">Orden @x.NumeroOrden · @x.Concepto · RD$ @x.Total.ToString("N2") · @x.Estado · <a asp-controller="Documentos" asp-action="Recibo" asp-route-id="@x.NumeroOrden" target="_blank">Recibo (PDF)</a></p> }
     </div></div>
 </div>

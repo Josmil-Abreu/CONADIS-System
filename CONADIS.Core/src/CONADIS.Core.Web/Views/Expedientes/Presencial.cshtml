@@ -1,0 +1,46 @@
+@model CONADIS.Core.Web.Controllers.FormularioPresencial
+@{ ViewData["Title"] = "Registro presencial"; }
+<a asp-action="Index" class="small">← Expedientes</a>
+<h1 class="h3 mt-2">Registro presencial de solicitud</h1>
+@if (ViewBag.Error is string error) { <div class="alert alert-danger" role="alert">@error</div> }
+<form method="post" class="bg-white border rounded p-3">
+    <fieldset class="row g-3 mb-3">
+        <legend class="h6">Solicitud</legend>
+        <div class="col-md-4"><label class="form-label" for="Tipo">Tipo</label>
+            <select class="form-select" id="Tipo" name="Tipo">@foreach (var t in new[] { "Certificacion", "Renovacion", "Duplicado" }) { <option selected="@(t == Model.Tipo)">@t</option> }</select></div>
+    </fieldset>
+    <fieldset class="row g-3 mb-3">
+        <legend class="h6">Persona con discapacidad</legend>
+        <div class="col-md-4"><label class="form-label" for="Cedula">Cédula</label><input class="form-control" id="Cedula" name="Cedula" value="@Model.Cedula" inputmode="numeric" /></div>
+        <div class="col-md-4"><label class="form-label" for="ActaNacimiento">Acta de nacimiento (menores sin cédula)</label><input class="form-control" id="ActaNacimiento" name="ActaNacimiento" value="@Model.ActaNacimiento" /></div>
+        <div class="col-md-4"><label class="form-label" for="FechaNacimiento">Fecha de nacimiento</label><input class="form-control" type="date" id="FechaNacimiento" name="FechaNacimiento" value="@Model.FechaNacimiento?.ToString("yyyy-MM-dd")" /></div>
+        <div class="col-md-4"><label class="form-label" for="Nombres">Nombres</label><input class="form-control" id="Nombres" name="Nombres" value="@Model.Nombres" required /></div>
+        <div class="col-md-4"><label class="form-label" for="Apellidos">Apellidos</label><input class="form-control" id="Apellidos" name="Apellidos" value="@Model.Apellidos" required /></div>
+        <div class="col-md-4"><label class="form-label" for="Sexo">Sexo</label>
+            <select class="form-select" id="Sexo" name="Sexo"><option value="">—</option><option value="1" selected="@(Model.Sexo == 1)">Masculino</option><option value="2" selected="@(Model.Sexo == 2)">Femenino</option></select></div>
+    </fieldset>
+    <fieldset class="row g-3 mb-3">
+        <legend class="h6">Contacto y dirección</legend>
+        <div class="col-md-4"><label class="form-label" for="Telefono">Teléfono</label><input class="form-control" id="Telefono" name="Telefono" value="@Model.Telefono" /></div>
+        <div class="col-md-4"><label class="form-label" for="Correo">Correo</label><input class="form-control" type="email" id="Correo" name="Correo" value="@Model.Correo" /></div>
+        <div class="col-md-4"><label class="form-label" for="CanalNotificacion">Notificar por</label>
+            <select class="form-select" id="CanalNotificacion" name="CanalNotificacion">@foreach (var t in new[] { "Correo", "SMS", "Portal" }) { <option selected="@(t == Model.CanalNotificacion)">@t</option> }</select></div>
+        <div class="col-md-3"><label class="form-label" for="Provincia">Provincia</label><input class="form-control" id="Provincia" name="Provincia" value="@Model.Provincia" /></div>
+        <div class="col-md-3"><label class="form-label" for="Municipio">Municipio</label><input class="form-control" id="Municipio" name="Municipio" value="@Model.Municipio" /></div>
+        <div class="col-md-3"><label class="form-label" for="Sector">Sector</label><input class="form-control" id="Sector" name="Sector" value="@Model.Sector" /></div>
+        <div class="col-md-3"><label class="form-label" for="Direccion">Dirección</label><input class="form-control" id="Direccion" name="Direccion" value="@Model.Direccion" /></div>
+    </fieldset>
+    <fieldset class="row g-3 mb-3">
+        <legend class="h6">Tutor (si aplica)</legend>
+        <div class="col-md-4"><label class="form-label" for="CedulaTutor">Cédula del tutor</label><input class="form-control" id="CedulaTutor" name="CedulaTutor" value="@Model.CedulaTutor" /></div>
+        <div class="col-md-4"><label class="form-label" for="VinculoTutor">Vínculo</label><input class="form-control" id="VinculoTutor" name="VinculoTutor" value="@Model.VinculoTutor" /></div>
+    </fieldset>
+    <fieldset class="row g-3 mb-3">
+        <legend class="h6">Certificado médico</legend>
+        <div class="col-md-3"><label class="form-label" for="Establecimiento">Establecimiento</label><input class="form-control" id="Establecimiento" name="Establecimiento" value="@Model.Establecimiento" /></div>
+        <div class="col-md-3"><label class="form-label" for="NumeroCertificadoMedico">N.º de certificado</label><input class="form-control" id="NumeroCertificadoMedico" name="NumeroCertificadoMedico" value="@Model.NumeroCertificadoMedico" /></div>
+        <div class="col-md-3"><label class="form-label" for="FechaCertificadoMedico">Fecha</label><input class="form-control" type="date" id="FechaCertificadoMedico" name="FechaCertificadoMedico" value="@Model.FechaCertificadoMedico?.ToString("yyyy-MM-dd")" /></div>
+        <div class="col-md-3"><label class="form-label" for="CodigoCie10">CIE-10</label><input class="form-control" id="CodigoCie10" name="CodigoCie10" value="@Model.CodigoCie10" /></div>
+    </fieldset>
+    <button class="btn btn-primary">Registrar solicitud</button>
+</form>

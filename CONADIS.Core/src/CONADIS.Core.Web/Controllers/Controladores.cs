@@ -85,8 +85,14 @@ public sealed class InicioController : ControladorCore
 // Expedientes: búsqueda y Expediente Único (analistas, supervisores, comité, evaluadores, auditores)
 // =====================================================================================================
 
+public sealed record FormularioPresencial(string Tipo, string? Cedula, string? ActaNacimiento, string Nombres, string Apellidos,
+    DateOnly? FechaNacimiento, int? Sexo, string? Telefono, string? Correo, string CanalNotificacion, string? Provincia, string? Municipio,
+    string? Sector, string? Direccion, string? CedulaTutor, string? VinculoTutor, string? Establecimiento, string? NumeroCertificadoMedico,
+    DateOnly? FechaCertificadoMedico, string? CodigoCie10);
+
 [Authorize(Policy = "Expedientes")]
-public sealed class ExpedientesController(ServicioExpedientes expedientes, ServicioCarnets carnets) : ControladorCore
+public sealed class ExpedientesController(ServicioExpedientes expedientes, ServicioCarnets carnets, ServicioCitas citas,
+    ServicioCatalogos catalogos) : ControladorCore
 {
     [HttpGet]
     public async Task<IActionResult> Index(string? texto, string? estado, CancellationToken ct)
@@ -100,15 +106,6 @@ public sealed class ExpedientesController(ServicioExpedientes expedientes, Servi
         return View(lista);
     }
 
-    [HttpGet]
-    public async Task<IActionResult> Detalle(int id, CancellationToken ct)
-    {
-        var e = await expedientes.ObtenerAsync(id, ct);
-        if (e is null) return NotFound();
-        if (Usuario.Rol == Roles.Evaluador && e.Cabecera.CentroId != Usuario.CentroId) return Forbid();
-        return View(e);
-    }
-
     /// <summary>Emitir carnet de un expediente aprobado (RF: el analista lo emite; la firma la pone Integración).</summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -119,10 +116,97 @@ public sealed class ExpedientesController(ServicioExpedientes expedientes, Servi
         TempData["Mensaje"] = $"Carnet {c.NumeroCarnet} emitido (certificado {c.NumeroCertificado}).";
         return RedirectToAction(nameof(Detalle), new { id });
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Detalle(int id, CancellationToken ct)
+    {
+        var e = await expedientes.ObtenerAsync(id, ct);
+        if (e is null) return NotFound();
+        if (Usuario.Rol == Roles.Evaluador && e.Cabecera.CentroId != Usuario.CentroId) return Forbid();
+        if (Usuario.Rol is Roles.AnalistaRegistro or Roles.Administrador)
+        {
+            var centros = await catalogos.ListarCentrosAsync(true, ct);
+            ViewBag.Centros = centros;
+            var centro = e.Cabecera.CentroId ?? centros.FirstOrDefault()?.CentroId;
+            ViewBag.Cupos = centro is { } c ? await citas.DisponibilidadAsync(c, DateOnly.FromDateTime(DateTime.Today.AddDays(1)), 15, ct) : [];
+        }
+        return View(e);
+    }
+
+    /// <summary>Asignar cita de valoración (analista de registro).</summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = Roles.AnalistaRegistro + "," + Roles.Administrador)]
+    public async Task<IActionResult> AsignarCita(int id, int centroId, DateTime fechaHora, bool domiciliaria, CancellationToken ct)
+    {
+        await citas.AsignarAsync(Usuario, id, centroId, new DateTimeOffset(fechaHora), domiciliaria, ct);
+        TempData["Mensaje"] = $"Cita asignada para el {fechaHora:dd/MM/yyyy HH:mm}. Se notifica al ciudadano.";
+        return RedirectToAction(nameof(Detalle), new { id });
+    }
+
+    /// <summary>Anulación lógica de un carnet con motivo (supervisor de registro).</summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = Roles.SupervisorRegistro)]
+    public async Task<IActionResult> AnularCarnet(int id, int carnetId, string motivo, CancellationToken ct)
+    {
+        await carnets.AnularAsync(Usuario, carnetId, motivo ?? "", ct);
+        TempData["Mensaje"] = "Carnet anulado. Queda registrado en la auditoría.";
+        return RedirectToAction(nameof(Detalle), new { id });
+    }
+
+    /// <summary>Personas cuya identidad no pudo validar la JCE: el analista la valida con el documento físico.</summary>
+    [HttpGet]
+    [Authorize(Roles = Roles.AnalistaRegistro + "," + Roles.SupervisorRegistro + "," + Roles.Administrador)]
+    public async Task<IActionResult> Identidad(CancellationToken ct) => View(await expedientes.ListarIdentidadPendienteAsync(24, ct));
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = Roles.AnalistaRegistro + "," + Roles.SupervisorRegistro + "," + Roles.Administrador)]
+    public async Task<IActionResult> AprobarIdentidad(int personaId, string comentario, CancellationToken ct)
+    {
+        await expedientes.AprobarIdentidadManualAsync(Usuario, personaId, comentario ?? "", ct);
+        TempData["Mensaje"] = "Identidad validada manualmente.";
+        return RedirectToAction(nameof(Identidad));
+    }
+
+    /// <summary>Registro presencial en ventanilla (CU-01, canal Presencial).</summary>
+    [HttpGet]
+    [Authorize(Roles = Roles.AnalistaRegistro + "," + Roles.Administrador)]
+    public IActionResult Presencial() => View(new FormularioPresencial("Certificacion", null, null, "", "", null, null, null, null, "Correo",
+        null, null, null, null, null, null, null, null, null, null));
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = Roles.AnalistaRegistro + "," + Roles.Administrador)]
+    public async Task<IActionResult> Presencial(FormularioPresencial f, CancellationToken ct)
+    {
+        try
+        {
+            var r = await expedientes.RegistrarSolicitudAsync(new NuevaSolicitud
+            {
+                Canal = "Presencial", Tipo = f.Tipo, Cedula = f.Cedula, CedulaCuenta = f.Cedula, ActaNacimiento = f.ActaNacimiento,
+                Nombres = f.Nombres ?? "", Apellidos = f.Apellidos ?? "", FechaNacimiento = f.FechaNacimiento, Sexo = f.Sexo,
+                EstadoIdentidad = "Pendiente", Telefono = f.Telefono, Correo = f.Correo, CanalNotificacion = f.CanalNotificacion ?? "Correo",
+                Provincia = f.Provincia, Municipio = f.Municipio, Sector = f.Sector, Direccion = f.Direccion,
+                CedulaTutor = f.CedulaTutor, VinculoTutor = f.VinculoTutor, Establecimiento = f.Establecimiento,
+                NumeroCertificadoMedico = f.NumeroCertificadoMedico, FechaCertificadoMedico = f.FechaCertificadoMedico, CodigoCie10 = f.CodigoCie10
+            }, new ContextoAccion(Usuario.Username, Ip), ct);
+            TempData["Mensaje"] = $"Solicitud {r.NumeroTramite} registrada (expediente {r.NumeroExpediente})" +
+                (r.NumeroOrden is null ? "." : $". Orden de pago {r.NumeroOrden}: el ciudadano paga en Caja.") +
+                " Valide la identidad con el documento físico en «Identidad pendiente».";
+            return RedirectToAction(nameof(Index), new { texto = r.NumeroExpediente });
+        }
+        catch (ReglaNegocioException ex)
+        {
+            ViewBag.Error = ex.Message;
+            return View(f);
+        }
+    }
 }
 
 // =====================================================================================================
-// Valoración: agenda del centro del evaluador (la codificación CIF y el WHODAS son pantallas pendientes)
+// Valoración: agenda del centro, codificación CIF, WHODAS, firmas y consolidación
 // =====================================================================================================
 
 [Authorize(Policy = "Valoracion")]
@@ -227,9 +311,11 @@ public sealed class ComiteController(ServicioDictamen dictamen) : ControladorCor
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Votar(int evaluacionId, string voto, string? motivo, CancellationToken ct)
+    public async Task<IActionResult> Votar(int evaluacionId, string voto, string? motivo, string? grado, string? tipo,
+        bool permanente, DateOnly? fechaVencimiento, CancellationToken ct)
     {
-        var r = await dictamen.VotarAsync(Usuario, new NuevoVoto(evaluacionId, voto, Motivo: motivo), ct);
+        var r = await dictamen.VotarAsync(Usuario, new NuevoVoto(evaluacionId, voto,
+            string.IsNullOrEmpty(grado) ? null : grado, string.IsNullOrEmpty(tipo) ? null : tipo, motivo, permanente, fechaVencimiento), ct);
         TempData["Mensaje"] = r.Resultado switch
         {
             "Aprobado" => "Voto registrado. El dictamen quedó APROBADO.",

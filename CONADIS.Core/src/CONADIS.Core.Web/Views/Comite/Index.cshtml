@@ -15,7 +15,18 @@
         <p class="mb-2">WHODAS @(d.PuntajeWhodas?.ToString("N1") ?? "—") · Propuesta: <strong>@d.GradoPropuesto @d.TipoPropuesto</strong></p>
         <form asp-action="Votar" method="post" class="row g-2 align-items-end">
             <input type="hidden" name="evaluacionId" value="@d.EvaluacionId" />
-            <div class="col-md-6"><label class="form-label" for="m@(d.EvaluacionId)">Motivo (obligatorio si rechaza)</label>
+            <div class="col-md-3"><label class="form-label" for="g@(d.EvaluacionId)">Grado</label>
+                <select id="g@(d.EvaluacionId)" name="grado" class="form-select"><option value="">Propuesto (@d.GradoPropuesto)</option>
+                    @foreach (var g in Valores.Grados) { <option>@g</option> }</select></div>
+            <div class="col-md-3"><label class="form-label" for="t@(d.EvaluacionId)">Tipo</label>
+                <select id="t@(d.EvaluacionId)" name="tipo" class="form-select"><option value="">Propuesto (@d.TipoPropuesto)</option>
+                    @foreach (var t in Valores.TiposDiscapacidad) { <option>@t</option> }</select></div>
+            <div class="col-md-3"><label class="form-label" for="v@(d.EvaluacionId)">Vence (si no es permanente)</label>
+                <input type="date" id="v@(d.EvaluacionId)" name="fechaVencimiento" class="form-control" /></div>
+            <div class="col-md-3"><div class="form-check">
+                <input class="form-check-input" type="checkbox" id="p@(d.EvaluacionId)" name="permanente" value="true" />
+                <label class="form-check-label" for="p@(d.EvaluacionId)">Condición permanente</label></div></div>
+            <div class="col-md-6"><label class="form-label" for="m@(d.EvaluacionId)">Motivo (obligatorio si rechaza o ajusta)</label>
                 <input id="m@(d.EvaluacionId)" name="motivo" class="form-control" /></div>
             <div class="col-auto"><button name="voto" value="Aprobar" class="btn btn-success">Aprobar</button></div>
             <div class="col-auto"><button name="voto" value="Rechazar" class="btn btn-outline-danger">Rechazar</button></div>
