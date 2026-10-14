@@ -1,0 +1,6 @@
+@{ var actual = ViewContext.RouteData.Values["action"]?.ToString(); }
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><a class="nav-link @(actual is "Index" or "Editar" ? "active" : "")" asp-action="Index">Usuarios</a></li>
+    <li class="nav-item"><a class="nav-link @(actual == "Parametros" ? "active" : "")" asp-action="Parametros">Parámetros</a></li>
+    <li class="nav-item"><a class="nav-link @(actual == "Tasas" ? "active" : "")" asp-action="Tasas">Tasas</a></li>
+</ul>

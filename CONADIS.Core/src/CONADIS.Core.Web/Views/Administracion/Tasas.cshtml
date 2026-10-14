@@ -1,0 +1,25 @@
+@model List<Tasa>
+@{ ViewData["Title"] = "Tasas"; }
+<h1 class="h3">Administración</h1>
+<partial name="_Pestanas" />
+<p class="small text-muted">Las tasas se publican a la Caja por Integración en su próxima sincronización.</p>
+<table class="table bg-white tabla-compacta align-middle">
+    <thead><tr><th>Código</th><th>Descripción</th><th>Monto RD$</th><th>ITBIS %</th><th>Resolución</th><th>Activa</th><th></th></tr></thead>
+    <tbody>
+    @foreach (var t in Model.Append(new Tasa(0, "", "", 0, 0, "", true)))
+    {
+        var f = $"t{t.TasaId}";
+        <tr>
+            <td><input form="@f" class="form-control form-control-sm" name="codigo" value="@t.Codigo" aria-label="Código" required maxlength="20" /></td>
+            <td><input form="@f" class="form-control form-control-sm" name="descripcion" value="@t.Descripcion" aria-label="Descripción" required /></td>
+            <td><input form="@f" class="form-control form-control-sm" type="number" step="0.01" min="0" name="monto" value="@t.Monto.ToString(System.Globalization.CultureInfo.InvariantCulture)" aria-label="Monto" /></td>
+            <td><input form="@f" class="form-control form-control-sm" type="number" step="0.01" min="0" name="itbisPorcentaje" value="@t.ItbisPorcentaje.ToString(System.Globalization.CultureInfo.InvariantCulture)" aria-label="ITBIS" /></td>
+            <td><input form="@f" class="form-control form-control-sm" name="resolucion" value="@t.Resolucion" aria-label="Resolución" required /></td>
+            <td><input form="@f" type="checkbox" class="form-check-input" name="activa" value="true" checked="@t.Activa" aria-label="Activa" />
+                <input form="@f" type="hidden" name="activa" value="false" /></td>
+            <td><form id="@f" method="post"><input type="hidden" name="tasaId" value="@t.TasaId" />
+                <button class="btn btn-sm @(t.TasaId == 0 ? "btn-primary" : "btn-outline-primary")">@(t.TasaId == 0 ? "Agregar" : "Guardar")</button></form></td>
+        </tr>
+    }
+    </tbody>
+</table>

@@ -31,7 +31,7 @@ public static class Menu
             [Roles.Administrador, Roles.Auditor, Roles.AnalistaRegistro, Roles.SupervisorRegistro]),
         new("Auditoria", "Auditoría", "Auditoria", "Bitácora de acciones y verificación de integridad.",
             [Roles.Auditor, Roles.Administrador]),
-        new("Administracion", "Administración", "Administracion", "Usuarios y roles del personal.",
+        new("Administracion", "Administración", "Administracion", "Usuarios, parámetros y tasas.",
             [Roles.Administrador]),
         new("Integracion", "Integración", "Integracion", "Transacciones de interoperabilidad, pagos recibidos y disponibilidad de servicios.",
             [Roles.Auditor, Roles.Administrador]),

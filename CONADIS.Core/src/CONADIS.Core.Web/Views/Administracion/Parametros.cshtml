@@ -1,0 +1,20 @@
+@model List<ParametroNegocio>
+@{ ViewData["Title"] = "Parámetros"; }
+<h1 class="h3">Administración</h1>
+<partial name="_Pestanas" />
+<p class="small text-muted">Cada cambio queda en la bitácora de auditoría.</p>
+<table class="table bg-white tabla-compacta align-middle">
+    <thead><tr><th>Clave</th><th>Descripción</th><th style="width:40%">Valor</th></tr></thead>
+    <tbody>
+    @foreach (var p in Model)
+    {
+        <tr><td><code>@p.Clave</code></td><td>@p.Descripcion</td>
+            <td><form method="post" class="d-flex gap-2">
+                <input type="hidden" name="clave" value="@p.Clave" />
+                <label class="visually-hidden" for="v-@p.Clave">Valor de @p.Clave</label>
+                <input class="form-control form-control-sm" id="v-@p.Clave" name="valor" value="@p.Valor" required />
+                <button class="btn btn-sm btn-outline-primary">Guardar</button>
+            </form></td></tr>
+    }
+    </tbody>
+</table>

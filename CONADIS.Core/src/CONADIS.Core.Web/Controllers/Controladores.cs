@@ -1,4 +1,5 @@
 using System.Data;
+using CONADIS.Core.Negocio.Datos;
 using CONADIS.Core.Negocio.Modelos;
 using CONADIS.Core.Negocio.Reportes;
 using CONADIS.Core.Negocio.Servicios;
@@ -374,16 +375,99 @@ public sealed class AuditoriaController(ServicioAuditoria auditoria) : Controlad
 }
 
 // =====================================================================================================
-// Administración: usuarios del personal (crear / editar son pantallas pendientes: ServicioUsuarios.GuardarAsync)
+// Administración: usuarios del personal, parámetros de negocio y tasas
 // =====================================================================================================
 
+public sealed record FormularioUsuario(int? UsuarioId, string Username, string? Contrasena, string NombreCompleto, string Correo,
+    int RolId, string? Disciplina, int? CentroId, bool Activo);
+
 [Authorize(Policy = "Administracion")]
-public sealed class AdministracionController(ServicioUsuarios usuarios) : ControladorCore
+public sealed class AdministracionController(ServicioUsuarios usuarios, ServicioCatalogos catalogos) : ControladorCore
 {
+    private ContextoAccion Accion => new(Usuario.Username, Ip);
+
     [HttpGet]
     public async Task<IActionResult> Index(string? texto, CancellationToken ct)
     {
         ViewBag.Texto = texto;
         return View(await usuarios.ListarAsync(texto, ct));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Editar(int? id, CancellationToken ct)
+    {
+        var f = new FormularioUsuario(null, "", null, "", "", 0, null, null, true);
+        if (id is { } uid)
+        {
+            var u = await usuarios.ObtenerAsync(uid, ct);
+            if (u is null) return NotFound();
+            f = new FormularioUsuario(u.UsuarioId, u.Username, null, u.NombreCompleto, u.Correo, u.RolId, u.Disciplina, u.CentroId, u.Activo);
+            ViewBag.Bloqueado = u.BloqueadoHasta > DateTimeOffset.Now;
+        }
+        await CargarListasAsync(ct);
+        return View(f);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Editar(FormularioUsuario f, CancellationToken ct)
+    {
+        try
+        {
+            var id = await usuarios.GuardarAsync(new DatosUsuario(f.UsuarioId, f.Username ?? "", f.Contrasena, f.NombreCompleto ?? "",
+                f.Correo ?? "", f.RolId, string.IsNullOrEmpty(f.Disciplina) ? null : f.Disciplina, f.CentroId, f.Activo), Accion, ct);
+            TempData["Mensaje"] = f.UsuarioId is null ? $"Usuario {f.Username} creado." : $"Usuario {f.Username} actualizado.";
+            return RedirectToAction(nameof(Editar), new { id });
+        }
+        catch (ReglaNegocioException ex)
+        {
+            ViewBag.Error = ex.Message;
+            await CargarListasAsync(ct);
+            return View(f with { Contrasena = null });
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Restablecer(int id, string contrasena, CancellationToken ct)
+    {
+        await usuarios.CambiarContrasenaAsync(id, contrasena ?? "", Accion, ct);
+        TempData["Mensaje"] = "Contraseña restablecida. Entréguela al usuario por un canal seguro.";
+        return RedirectToAction(nameof(Editar), new { id });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Desbloquear(int id, CancellationToken ct)
+    {
+        await usuarios.DesbloquearAsync(id, Accion, ct);
+        TempData["Mensaje"] = "Usuario desbloqueado.";
+        return RedirectToAction(nameof(Editar), new { id });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Parametros(CancellationToken ct) => View(await catalogos.ListarParametrosAsync(ct));
+
+    [HttpPost]
+    public async Task<IActionResult> Parametros(string clave, string valor, CancellationToken ct)
+    {
+        await catalogos.ActualizarParametroAsync(clave, valor ?? "", Accion, ct);
+        TempData["Mensaje"] = $"Parámetro {clave} actualizado.";
+        return RedirectToAction(nameof(Parametros));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Tasas(CancellationToken ct) => View(await catalogos.ListarTasasAsync(false, ct));
+
+    [HttpPost]
+    public async Task<IActionResult> Tasas(int tasaId, string codigo, string descripcion, decimal monto, decimal itbisPorcentaje,
+        string resolucion, bool activa, CancellationToken ct)
+    {
+        await catalogos.GuardarTasaAsync(new Tasa(tasaId, codigo ?? "", descripcion ?? "", monto, itbisPorcentaje, resolucion ?? "", activa), Accion, ct);
+        TempData["Mensaje"] = $"Tasa {codigo} guardada. Caja la recibirá en su próxima sincronización.";
+        return RedirectToAction(nameof(Tasas));
+    }
+
+    private async Task CargarListasAsync(CancellationToken ct)
+    {
+        ViewBag.Roles = await usuarios.ListarRolesAsync(ct);
+        ViewBag.Centros = await catalogos.ListarCentrosAsync(true, ct);
     }
 }
