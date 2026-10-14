@@ -1,21 +1,15 @@
-@model string?
-@{ ViewData["Title"] = "Iniciar sesión"; }
+@{ ViewData["Title"] = "Entrar al sistema interno"; }
 <div class="row justify-content-center">
-    <div class="col-sm-8 col-md-5 col-lg-4">
-        <form asp-action="IniciarSesion" method="post" class="tarjeta mt-4">
+    <div class="col-sm-8 col-md-6 col-lg-5">
+        <div class="tarjeta mt-4">
             <h1 class="h4 mb-3">Personal del CONADIS</h1>
-            @if (ViewBag.Error is string e) { <div class="alert alert-danger" role="alert">@e</div> }
-            <input type="hidden" name="returnUrl" value="@Model" />
-            <div class="mb-3">
-                <label for="usuario" class="form-label">Usuario</label>
-                <input id="usuario" name="usuario" class="form-control" value="@ViewBag.Usuario" autocomplete="username" required autofocus />
-            </div>
-            <div class="mb-3">
-                <label for="contrasena" class="form-label">Contraseña</label>
-                <input id="contrasena" name="contrasena" type="password" class="form-control" autocomplete="current-password" required />
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Entrar</button>
-            <p class="small text-muted mt-3 mb-0">También puede entrar desde <strong>CONADIS Inicio</strong>.</p>
-        </form>
+            <p>El sistema interno se abre únicamente desde <strong>CONADIS Inicio</strong>, el programa de login único.</p>
+            <ol class="mb-0">
+                <li>Abra <strong>CONADIS Inicio</strong> en esta computadora.</li>
+                <li>Escriba su usuario y contraseña del personal.</li>
+                <li>El sistema interno se abrirá aquí con su sesión y el menú de su rol.</li>
+            </ol>
+            <p class="small text-muted mt-3 mb-0">Si su sesión venció por inactividad (15 minutos), vuelva a entrar desde CONADIS Inicio.</p>
+        </div>
     </div>
 </div>

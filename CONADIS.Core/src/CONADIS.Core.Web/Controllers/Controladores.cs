@@ -12,32 +12,19 @@ using Microsoft.AspNetCore.Mvc;
 namespace CONADIS.Core.Web.Controllers;
 
 // =====================================================================================================
-// Cuenta: login del personal (directo o con el pase de CONADIS.Inicio)
+// Cuenta: el personal entra solo con el pase de CONADIS.Inicio (login único)
 // =====================================================================================================
 
 [AllowAnonymous]
 public sealed class CuentaController(ServicioAutenticacion autenticacion, IConfiguration config) : ControladorCore
 {
+    /// <summary>
+    /// El sistema interno no tiene formulario de login propio: solo se entra desde CONADIS.Inicio (login único).
+    /// Aquí llega quien abre la URL directamente o cuya sesión venció; se le indica que entre por CONADIS Inicio.
+    /// </summary>
     [HttpGet]
-    public IActionResult IniciarSesion(string? returnUrl = null)
-        => User.Identity?.IsAuthenticated == true ? RedirectToAction("Index", "Inicio") : View(model: returnUrl);
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> IniciarSesion(string usuario, string contrasena, string? returnUrl, CancellationToken ct)
-    {
-        var r = await autenticacion.IniciarSesionAsync(usuario, contrasena, Ip, ct);
-        if (!r.Exito || r.Usuario is null)
-        {
-            ViewBag.Error = r.Mensaje;
-            ViewBag.Usuario = usuario;
-            return View(model: returnUrl);
-        }
-
-        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
-            SesionPersonal.Principal(r.Usuario, CookieAuthenticationDefaults.AuthenticationScheme));
-        return !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : RedirectToAction("Index", "Inicio");
-    }
+    public IActionResult IniciarSesion()
+        => User.Identity?.IsAuthenticated == true ? RedirectToAction("Index", "Inicio") : View();
 
     /// <summary>GET /Cuenta/Entrar?pase=...  → lo abre CONADIS.Inicio después del login único.</summary>
     [HttpGet]
@@ -46,7 +33,7 @@ public sealed class CuentaController(ServicioAutenticacion autenticacion, IConfi
         var u = await autenticacion.IniciarConPaseAsync(pase, config["Inicio:ClaveTraspaso"] ?? "", Ip, ct);
         if (u is null)
         {
-            TempData["Error"] = "El acceso desde CONADIS Inicio venció o no es válido. Inicie sesión aquí.";
+            TempData["Error"] = "El acceso desde CONADIS Inicio venció o no es válido. Vuelva a entrar desde CONADIS Inicio.";
             return RedirectToAction(nameof(IniciarSesion));
         }
 
