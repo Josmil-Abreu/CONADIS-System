@@ -25,6 +25,9 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <!-- Reportes RDLC en .NET moderno (el ReportViewer clásico solo existe para .NET Framework) -->
     <PackageReference Include="ReportViewerCore.NETCore" Version="15.1.22" />
+    <!-- ReportViewerCore trae versiones viejas con avisos de seguridad (NU1902/NU1903): se fijan las corregidas -->
+    <PackageReference Include="System.IO.Packaging" Version="10.0.0" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>
