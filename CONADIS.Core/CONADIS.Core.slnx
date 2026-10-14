@@ -15,6 +15,7 @@
   <Folder Name="/src/">
     <Project Path="src/CONADIS.Core.Api/CONADIS.Core.Api.csproj" Id="007dbc22-d280-4d85-a6be-adf6f8e62a70" />
     <Project Path="src/CONADIS.Core.Negocio/CONADIS.Core.Negocio.csproj" />
+    <Project Path="src/CONADIS.Core.Web/CONADIS.Core.Web.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="test/CONADIS.Core.Pruebas/CONADIS.Core.Pruebas.csproj" Id="0e37dc32-4f16-4b7c-8ae2-a7da2217643d" />

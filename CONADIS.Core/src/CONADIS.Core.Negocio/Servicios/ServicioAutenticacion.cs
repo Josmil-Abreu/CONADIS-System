@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using CONADIS.Core.Negocio.Datos;
 using CONADIS.Core.Negocio.Modelos;
 using CONADIS.Core.Negocio.Seguridad;
@@ -74,6 +74,31 @@ public sealed class ServicioAutenticacion(EjecutorSp db)
             fila.Texto("Rol"),
             fila.TextoONulo("Disciplina"),
             fila.EnteroONulo("CentroId")));
+    }
+
+    /// <summary>
+    /// Sesión a partir de un pase de CONADIS.Inicio (la contraseña ya se verificó allí).
+    /// Igual que el login, rechaza cuentas desactivadas o bloqueadas. Null si el pase no es válido.
+    /// </summary>
+    public async Task<UsuarioSesion?> IniciarConPaseAsync(string? pase, string claveTraspaso, string? ip, CancellationToken ct = default)
+    {
+        var usuario = PaseInicio.Validar(pase, "Core", claveTraspaso);
+        if (usuario is null)
+        {
+            Log.Warn($"Pase de inicio inválido o vencido desde {ip}.");
+            return null;
+        }
+
+        var tabla = await db.ConsultarAsync("seg.ppUsuario_ObtenerParaLogin", [Parametro.Texto("@Username", usuario, 50)], ct);
+        if (tabla.Rows.Count == 0) return null;
+        var fila = tabla.Rows[0];
+        if (!fila.Booleano("Activo") || fila.FechaHoraONula("BloqueadoHasta") > DateTimeOffset.Now) return null;
+
+        await db.EjecutarAsync("seg.ppUsuario_RegistrarAccesoExitoso",
+            [Parametro.Entero("@UsuarioId", fila.Entero("UsuarioId")), Parametro.TextoAnsi("@Ip", ip, 45)], ct);
+        Log.Info($"Inicio de sesión de '{usuario}' con pase de CONADIS.Inicio desde {ip}.");
+        return new UsuarioSesion(fila.Entero("UsuarioId"), fila.Texto("Username"), fila.Texto("NombreCompleto"), fila.Texto("Correo"),
+            fila.Texto("Rol"), fila.TextoONulo("Disciplina"), fila.EnteroONulo("CentroId"));
     }
 
     private static string MensajeBloqueo(DateTimeOffset hasta)

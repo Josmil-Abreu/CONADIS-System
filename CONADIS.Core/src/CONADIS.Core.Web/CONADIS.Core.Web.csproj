@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    CONADIS.Core.Web: aplicación interna del personal del CONADIS (analistas, evaluadores, comité,
+    supervisores, auditores y administradores). Usa directamente CONADIS.Core.Negocio y CONADIS_CoreDB
+    (está dentro del módulo Core). Cada rol ve solo su menú; los servicios vuelven a exigir el rol.
+    Se entra con usuario y contraseña o con el pase de CONADIS.Inicio (login único).
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>CONADIS.Core.Web</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CONADIS.Core.Negocio\CONADIS.Core.Negocio.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="log4net.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

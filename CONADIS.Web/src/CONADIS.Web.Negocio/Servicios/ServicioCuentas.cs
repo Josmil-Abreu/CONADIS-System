@@ -88,6 +88,23 @@ public sealed class ServicioCuentas(EjecutorSp db, ClienteSnd snd)
             f.Texto("EstadoIdentidad"), f.Booleano("CorreoVerificado"), f.Booleano("AltoContraste"), f.Entero("TamanoTexto")));
     }
 
+    /// <summary>Sesión a partir de un pase de CONADIS.Inicio (la contraseña ya se verificó allí). Null si no es válido.</summary>
+    public async Task<CuentaSesion?> IniciarConPaseAsync(string? pase, string claveTraspaso, string? ip, CancellationToken ct = default)
+    {
+        var cedula = PaseInicio.Validar(pase, "Web", claveTraspaso);
+        if (cedula is null) return null;
+
+        var tabla = await db.ConsultarAsync("web.ppCuenta_ObtenerParaLogin", [Parametro.Texto("@Usuario", cedula, 150)], ct);
+        if (tabla.Rows.Count == 0) return null;
+        var f = tabla.Rows[0];
+        if (!f.Booleano("Activa") || f.FechaHoraONula("BloqueadoHasta") > DateTimeOffset.Now) return null;
+
+        var cuentaId = f.Entero("CuentaId");
+        await db.EjecutarAsync("web.ppCuenta_RegistrarAccesoExitoso", [Parametro.Entero("@CuentaId", cuentaId), Parametro.TextoAnsi("@Ip", ip, 45)], ct);
+        return new CuentaSesion(cuentaId, f.Texto("Cedula"), f.Texto("NombreCompleto"), f.Texto("Correo"),
+            f.Texto("EstadoIdentidad"), f.Booleano("CorreoVerificado"), f.Booleano("AltoContraste"), f.Entero("TamanoTexto"));
+    }
+
     public Task<PerfilCuenta?> ObtenerPerfilAsync(int cuentaId, CancellationToken ct = default)
         => db.ConsultarUnoAsync("web.ppCuenta_Obtener", f => new PerfilCuenta(f.Entero("CuentaId"), f.Texto("Cedula"), f.Texto("Correo"),
                 f.TextoONulo("Telefono"), f.Texto("NombreCompleto"), f.Texto("EstadoIdentidad"), f.Booleano("CorreoVerificado"),

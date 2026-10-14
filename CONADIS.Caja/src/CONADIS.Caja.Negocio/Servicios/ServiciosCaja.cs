@@ -47,6 +47,22 @@ public sealed class ServicioAutenticacionCaja(EjecutorSp db, ILogger<ServicioAut
         return ResultadoLoginCaja.Correcto(u);
     }
 
+    /// <summary>Sesión a partir de un pase de CONADIS.Inicio (la contraseña ya se verificó allí). Null si no es válido.</summary>
+    public async Task<UsuarioCaja?> IniciarConPaseAsync(string? pase, string claveTraspaso, CancellationToken ct = default)
+    {
+        var usuario = PaseInicio.Validar(pase, "Caja", claveTraspaso);
+        if (usuario is null) return null;
+
+        var fila = (await db.ConsultarAsync("seg.ppUsuario_ObtenerParaLogin", [Parametro.Texto("@Username", usuario, 50)], ct))
+            .Rows.Cast<DataRow>().FirstOrDefault();
+        if (fila is null || !fila.Booleano("Activo") || fila.FechaHoraONula("BloqueadoHasta") > DateTimeOffset.Now) return null;
+
+        var u = new UsuarioCaja(fila.Entero("UsuarioId"), fila.Texto("Username"), fila.Texto("NombreCompleto"), fila.Texto("Rol"));
+        await db.EjecutarAsync("seg.ppUsuario_RegistrarAccesoExitoso", [Parametro.Entero("@UsuarioId", u.UsuarioId)], ct);
+        await Eventos.RegistrarAsync(db, u.Username, "Login", "Con pase de CONADIS.Inicio", ct);
+        return u;
+    }
+
     /// <summary>Autorización de un supervisor para una acción puntual (nota de crédito, cierre).</summary>
     public async Task<UsuarioCaja> AutorizarSupervisorAsync(string? usuario, string? contrasena, CancellationToken ct = default)
     {

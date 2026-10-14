@@ -1,0 +1,40 @@
+@model List<DictamenPendiente>
+@{
+    ViewData["Title"] = "Comité";
+    var apelaciones = (List<ApelacionPendiente>)ViewBag.Apelaciones;
+}
+<h1 class="h3">Dictámenes pendientes</h1>
+@if (Model.Count == 0) { <p class="text-muted">No hay dictámenes pendientes de voto.</p> }
+@foreach (var d in Model)
+{
+    <div class="tarjeta mb-3">
+        <div class="d-flex justify-content-between">
+            <h2 class="h5 mb-1">@d.NombreCompleto <small class="text-muted">· @d.NumeroExpediente</small></h2>
+            <span class="text-muted small">Votos: @d.Votos</span>
+        </div>
+        <p class="mb-2">WHODAS @(d.PuntajeWhodas?.ToString("N1") ?? "—") · Propuesta: <strong>@d.GradoPropuesto @d.TipoPropuesto</strong></p>
+        <form asp-action="Votar" method="post" class="row g-2 align-items-end">
+            <input type="hidden" name="evaluacionId" value="@d.EvaluacionId" />
+            <div class="col-md-6"><label class="form-label" for="m@(d.EvaluacionId)">Motivo (obligatorio si rechaza)</label>
+                <input id="m@(d.EvaluacionId)" name="motivo" class="form-control" /></div>
+            <div class="col-auto"><button name="voto" value="Aprobar" class="btn btn-success">Aprobar</button></div>
+            <div class="col-auto"><button name="voto" value="Rechazar" class="btn btn-outline-danger">Rechazar</button></div>
+        </form>
+    </div>
+}
+<h2 class="h4 mt-4">Apelaciones</h2>
+@if (apelaciones.Count == 0) { <p class="text-muted">No hay apelaciones pendientes.</p> }
+@foreach (var a in apelaciones)
+{
+    <div class="tarjeta mb-3">
+        <h3 class="h6">@a.NombreCompleto · @a.NumeroExpediente · @a.FechaRegistro.LocalDateTime.ToString("dd/MM/yyyy")</h3>
+        <p>@a.Motivo</p>
+        <form asp-action="ResolverApelacion" method="post" class="row g-2 align-items-end">
+            <input type="hidden" name="apelacionId" value="@a.ApelacionId" />
+            <div class="col-md-6"><label class="form-label" for="r@(a.ApelacionId)">Resolución</label>
+                <input id="r@(a.ApelacionId)" name="resolucion" class="form-control" required /></div>
+            <div class="col-auto"><button name="admitir" value="true" class="btn btn-success">Admitir</button></div>
+            <div class="col-auto"><button name="admitir" value="false" class="btn btn-outline-danger">Rechazar</button></div>
+        </form>
+    </div>
+}

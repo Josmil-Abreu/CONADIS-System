@@ -1,0 +1,13 @@
+@model EvaluacionDetalle
+@{ ViewData["Title"] = $"Evaluación {Model.EvaluacionId}"; }
+<a asp-action="Index" class="small">← Volver a la agenda</a>
+<h1 class="h3 mt-2">Evaluación @Model.EvaluacionId · @Model.NombreCompleto</h1>
+<p class="text-muted">Expediente @Model.NumeroExpediente · Estado: @Model.Estado · WHODAS: @(Model.PuntajeWhodas?.ToString("N1") ?? "pendiente") · Propuesta: @Model.GradoPropuesto @Model.TipoPropuesto</p>
+<div class="alert alert-info">
+    Pantalla pendiente: codificación CIF por disciplina, cuestionario WHODAS 2.0, firma de la disciplina y consolidación
+    (métodos de <code>ServicioValoracion</code>).
+</div>
+<h2 class="h5">Códigos CIF registrados</h2>
+<ul>
+    @foreach (var c in Model.Codificaciones) { <li>@c.Codigo · @c.Descripcion · @c.Disciplina · calificador @c.Calificador1</li> }
+</ul>

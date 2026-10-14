@@ -1,0 +1,55 @@
+@model ExpedienteCompleto
+@{
+    var c = Model.Cabecera;
+    ViewData["Title"] = c.NumeroExpediente;
+    var puedeEmitir = c.Estado == "Aprobado" && (User.IsInRole(Roles.AnalistaRegistro) || User.IsInRole(Roles.Administrador));
+}
+<a asp-action="Index" class="small">← Volver a la búsqueda</a>
+<div class="d-flex justify-content-between align-items-start mt-2">
+    <div>
+        <h1 class="h3 mb-0">Expediente @c.NumeroExpediente</h1>
+        <p class="text-muted">@c.Nombres @c.Apellidos · @(c.Cedula ?? c.ActaNacimiento) · Identidad: @c.EstadoIdentidad</p>
+    </div>
+    <span class="badge bg-primary fs-6">@c.Estado</span>
+</div>
+@if (puedeEmitir)
+{
+    <form asp-action="EmitirCarnet" asp-route-id="@c.ExpedienteId" method="post" class="mb-3">
+        <button class="btn btn-success">Emitir carnet</button>
+    </form>
+}
+<div class="row g-3">
+    <div class="col-lg-6"><div class="tarjeta">
+        <h2 class="h5">Datos</h2>
+        <dl class="row mb-0">
+            <dt class="col-5">Tipo / grado</dt><dd class="col-7">@(c.TipoDiscapacidad ?? "—") @c.GradoDiscapacidad</dd>
+            <dt class="col-5">Centro</dt><dd class="col-7">@(c.Centro ?? "—")</dd>
+            <dt class="col-5">Contacto</dt><dd class="col-7">@c.Telefono @c.Correo</dd>
+            <dt class="col-5">Dirección</dt><dd class="col-7">@c.Direccion, @c.Sector, @c.Municipio, @c.Provincia</dd>
+            <dt class="col-5">Vence</dt><dd class="col-7">@(c.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "—")</dd>
+        </dl>
+    </div></div>
+    <div class="col-lg-6"><div class="tarjeta">
+        <h2 class="h5">Historial</h2>
+        <ul class="list-unstyled mb-0 small">
+            @foreach (var h in Model.Historial)
+            {
+                <li class="mb-1"><strong>@h.EstadoNuevo</strong> · @h.Fecha.LocalDateTime.ToString("dd/MM/yyyy HH:mm") · @h.Usuario (@h.Unidad) @h.Comentario</li>
+            }
+        </ul>
+    </div></div>
+    <div class="col-lg-6"><div class="tarjeta">
+        <h2 class="h5">Solicitudes</h2>
+        @foreach (var s in Model.Solicitudes)
+        {
+            <p class="small mb-1">@s.NumeroTramite · @s.Tipo · @s.Canal · @s.Estado · Diagnóstico: @s.EstadoDiagnostico (@s.CodigoCie10)</p>
+        }
+    </div></div>
+    <div class="col-lg-6"><div class="tarjeta">
+        <h2 class="h5">Citas, evaluaciones y carnets</h2>
+        @foreach (var x in Model.Citas) { <p class="small mb-1">Cita: @x.FechaHora.LocalDateTime.ToString("dd/MM/yyyy HH:mm") · @x.Centro · @x.Estado</p> }
+        @foreach (var x in Model.Evaluaciones) { <p class="small mb-1">Evaluación @x.EvaluacionId: @x.Estado · WHODAS @x.PuntajeWhodas · @x.GradoPropuesto @x.TipoPropuesto · @x.Dictamen</p> }
+        @foreach (var x in Model.Carnets) { <p class="small mb-1">Carnet @x.NumeroCarnet · @x.Estado · vence @(x.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "permanente")</p> }
+        @foreach (var x in Model.Ordenes) { <p class="small mb-1">Orden @x.NumeroOrden · @x.Concepto · RD$ @x.Total.ToString("N2") · @x.Estado</p> }
+    </div></div>
+</div>

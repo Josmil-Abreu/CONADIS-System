@@ -6,6 +6,7 @@
   <Folder Name="/Core/">
     <Project Path="CONADIS.Core/src/CONADIS.Core.Api/CONADIS.Core.Api.csproj" />
     <Project Path="CONADIS.Core/src/CONADIS.Core.Negocio/CONADIS.Core.Negocio.csproj" />
+    <Project Path="CONADIS.Core/src/CONADIS.Core.Web/CONADIS.Core.Web.csproj" />
     <Project Path="CONADIS.Core/test/CONADIS.Core.Pruebas/CONADIS.Core.Pruebas.csproj" />
   </Folder>
   <Folder Name="/Integracion/">

@@ -1,0 +1,20 @@
+@model List<UsuarioResumen>
+@{ ViewData["Title"] = "Administración"; }
+<h1 class="h3">Usuarios del personal</h1>
+<form method="get" class="d-flex gap-2 mb-3" role="search">
+    <label for="texto" class="visually-hidden">Buscar</label>
+    <input id="texto" name="texto" value="@ViewBag.Texto" class="form-control w-auto" placeholder="Usuario o nombre" />
+    <button class="btn btn-outline-primary">Buscar</button>
+</form>
+<p class="small text-muted">Crear y editar usuarios: pantalla pendiente (<code>ServicioUsuarios.GuardarAsync</code>).</p>
+<table class="table table-striped bg-white tabla-compacta">
+    <thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Disciplina</th><th>Centro</th><th>Activo</th><th>Último acceso</th></tr></thead>
+    <tbody>
+    @foreach (var u in Model)
+    {
+        <tr><td>@u.Username</td><td>@u.NombreCompleto</td><td>@Menu.TextoRol(u.Rol)</td><td>@u.Disciplina</td><td>@u.Centro</td>
+            <td>@(u.Activo ? "Sí" : "No")@(u.BloqueadoHasta > DateTimeOffset.Now ? " (bloqueado)" : "")</td>
+            <td>@u.UltimoAcceso?.LocalDateTime.ToString("dd/MM/yyyy HH:mm")</td></tr>
+    }
+    </tbody>
+</table>

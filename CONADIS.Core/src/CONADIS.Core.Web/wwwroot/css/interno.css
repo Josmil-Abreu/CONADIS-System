@@ -1,0 +1,6 @@
+/* Estilos del sistema interno del CONADIS (base para el diseño final). */
+body { background: #f5f7fa; }
+.tarjeta { background: #fff; border: 1px solid #dee2e6; border-radius: .5rem; padding: 1.25rem; }
+.tarjeta-opcion { display: block; height: 100%; text-decoration: none; color: inherit; transition: box-shadow .15s; }
+.tarjeta-opcion:hover, .tarjeta-opcion:focus { box-shadow: 0 .25rem .75rem rgba(0,0,0,.12); }
+.tabla-compacta td, .tabla-compacta th { padding: .4rem .6rem; }

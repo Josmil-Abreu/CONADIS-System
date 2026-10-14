@@ -13,7 +13,7 @@ namespace CONADIS.Web.Controllers;
 
 /// <summary>Inicio de sesión, registro y recuperación de contraseña (cuentas en CONADIS_WebDB).</summary>
 [AllowAnonymous]
-public class CuentaController(ServicioCuentas cuentas, IWebHostEnvironment entorno) : ControladorPortal
+public class CuentaController(ServicioCuentas cuentas, IWebHostEnvironment entorno, IConfiguration config) : ControladorPortal
 {
     // GET /Cuenta/IniciarSesion
     [HttpGet]
@@ -45,6 +45,21 @@ public class CuentaController(ServicioCuentas cuentas, IWebHostEnvironment entor
         if (!string.IsNullOrEmpty(vm.ReturnUrl) && Url.IsLocalUrl(vm.ReturnUrl))
             return LocalRedirect(vm.ReturnUrl);
 
+        return RedirectToAction("Index", "Tramites");
+    }
+
+    // GET /Cuenta/Entrar?pase=...  → lo abre CONADIS.Inicio después del login único (no se pide la contraseña otra vez)
+    [HttpGet]
+    public async Task<IActionResult> Entrar(string? pase, CancellationToken ct)
+    {
+        var cuenta = await cuentas.IniciarConPaseAsync(pase, config["Inicio:ClaveTraspaso"] ?? "", Ip, ct);
+        if (cuenta is null)
+        {
+            TempData["Error"] = "El acceso desde CONADIS Inicio venció o no es válido. Inicia sesión aquí.";
+            return RedirectToAction(nameof(IniciarSesion));
+        }
+
+        await FirmarAsync(cuenta);
         return RedirectToAction("Index", "Tramites");
     }
 

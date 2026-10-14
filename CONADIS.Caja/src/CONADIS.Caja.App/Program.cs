@@ -18,7 +18,7 @@ internal static class Program
     ///  4. Muestra el inicio de sesión y, si es correcto, la pantalla principal.
     /// </summary>
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
 
@@ -56,11 +56,24 @@ internal static class Program
 
         try
         {
+            // Abierta desde CONADIS.Inicio (login único): "--pase <texto>" ya trae al usuario autenticado.
+            var pase = PaseDeArgumentos(args);
+            if (pase is not null)
+            {
+                var autenticacion = proveedor.GetRequiredService<ServicioAutenticacionCaja>();
+                var usuario = Task.Run(() => autenticacion.IniciarConPaseAsync(pase, config["Inicio:ClaveTraspaso"] ?? "")).GetAwaiter().GetResult();
+                if (usuario is not null) proveedor.GetRequiredService<ContextoCaja>().IniciarSesion(usuario);
+            }
+
             // Login → principal. Al cerrar sesión en la principal se vuelve al login.
             while (true)
             {
-                using var login = proveedor.GetRequiredService<FormLogin>();
-                if (login.ShowDialog() != DialogResult.OK) break;
+                var contexto = proveedor.GetRequiredService<ContextoCaja>();
+                if (!contexto.HayUsuario)
+                {
+                    using var login = proveedor.GetRequiredService<FormLogin>();
+                    if (login.ShowDialog() != DialogResult.OK) break;
+                }
 
                 using var principal = proveedor.GetRequiredService<FormPrincipal>();
                 Application.Run(principal);
@@ -72,5 +85,11 @@ internal static class Program
             sincronizacion.DisposeAsync().AsTask().GetAwaiter().GetResult();
             ConfiguradorLog4Net.Cerrar();
         }
+    }
+
+    private static string? PaseDeArgumentos(string[] args)
+    {
+        var i = Array.IndexOf(args, "--pase");
+        return i >= 0 && i + 1 < args.Length ? args[i + 1] : null;
     }
 }
