@@ -1,0 +1,2 @@
+@{ var prefix="den-"+Guid.NewGuid().ToString("N"); }
+<fieldset><legend>Efectivo por denominación (DOP)</legend><div class="denominations">@foreach(var d in Money.Denominations){<div><label for="@(prefix+d)">RD$ @d</label><input id="@(prefix+d)" name="Denominaciones[@d]" type="number" min="0" max="100000" value="0" required/></div>}</div></fieldset>
