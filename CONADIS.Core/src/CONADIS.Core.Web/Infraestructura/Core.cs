@@ -33,6 +33,8 @@ public static class Menu
             [Roles.Auditor, Roles.Administrador]),
         new("Administracion", "Administración", "Administracion", "Usuarios y roles del personal.",
             [Roles.Administrador]),
+        new("Integracion", "Integración", "Integracion", "Transacciones de interoperabilidad, pagos recibidos y disponibilidad de servicios.",
+            [Roles.Auditor, Roles.Administrador]),
         new("Documentos", "Mis transacciones", "Documentos", "Todo lo que usted registró, con el comprobante de cada transacción.",
             [Roles.AnalistaRegistro, Roles.SupervisorRegistro, Roles.Evaluador, Roles.Comite, Roles.Auditor, Roles.Administrador])
     ];

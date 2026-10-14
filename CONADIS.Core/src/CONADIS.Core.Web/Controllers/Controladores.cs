@@ -300,6 +300,44 @@ public sealed class DocumentosController(ServicioReportes reportes) : Controlado
 }
 
 // =====================================================================================================
+// Integración: sus reportes RDLC se piden por la API de Integración (auditor y administrador)
+// =====================================================================================================
+
+[Authorize(Policy = "Integracion")]
+public sealed class IntegracionController(ClienteReportesIntegracion integracion) : ControladorCore
+{
+    public static readonly IReadOnlyDictionary<string, string> Disponibles = new Dictionary<string, string>
+    {
+        ["transacciones"] = "Transacciones de interoperabilidad (bitácora)",
+        ["pagos"] = "Pagos recibidos y aplicados",
+        ["servicios"] = "Disponibilidad de servicios externos"
+    };
+
+    [HttpGet]
+    public IActionResult Index()
+    {
+        var (d, h) = ReportesController.Rango(null, null);
+        ViewBag.Desde = d;
+        ViewBag.Hasta = h;
+        return View();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Descargar(string reporte, DateOnly? desde, DateOnly? hasta, FormatoReporte formato, CancellationToken ct)
+    {
+        var (d, h) = ReportesController.Rango(desde, hasta);
+        return Archivo(await integracion.PeriodoAsync(reporte, d, h, formato.ToString(), Usuario.Username, ct));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Comprobante(long id, FormatoReporte formato, CancellationToken ct)
+        => Archivo(await integracion.ComprobanteAsync(id, formato.ToString(), Usuario.Username, ct));
+
+    private FileContentResult Archivo(ArchivoRemoto a)
+        => a.TipoContenido == "application/pdf" ? File(a.Contenido, a.TipoContenido) : File(a.Contenido, a.TipoContenido, a.NombreArchivo);
+}
+
+// =====================================================================================================
 // Auditoría (auditor y administrador): bitácora y verificación de la cadena de hashes
 // =====================================================================================================
 

@@ -19,6 +19,7 @@ public static class Ambitos
     public const string Caja = "caja";
     public const string Firma = "firma";
     public const string Verificar = "discapacidad.verificar";
+    public const string Reportes = "reportes";
 }
 
 /// <summary>Sistema cliente autenticado con su API key.</summary>

@@ -37,6 +37,15 @@ builder.Services.AddHttpClient<IFirmaDigital, FirmaDigitalIntegracion>(http =>
     if (!string.IsNullOrWhiteSpace(clave)) http.DefaultRequestHeaders.Add(ApiKey.Encabezado, clave);
 });
 
+// Reportes de Integración (el Core los pide por la API con su clave, ámbito "reportes")
+builder.Services.AddHttpClient<ClienteReportesIntegracion>(http =>
+{
+    http.BaseAddress = new Uri(builder.Configuration["Integracion:UrlBase"] ?? "https://localhost:7102/");
+    http.Timeout = TimeSpan.FromSeconds(60);
+    var clave = builder.Configuration["Integracion:ApiKey"];
+    if (!string.IsNullOrWhiteSpace(clave)) http.DefaultRequestHeaders.Add(ApiKey.Encabezado, clave);
+});
+
 // ---------------------------------------------------------------- 3. Seguridad: cookie + un permiso por área (RBAC)
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

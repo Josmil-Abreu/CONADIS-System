@@ -35,10 +35,10 @@ Requisitos: Visual Studio 2026 (.NET 10) y SQL Server LocalDB (`(localdb)\MSSQLL
 
 En SSMS o en Visual Studio (Explorador de objetos de SQL Server), ejecute los scripts **en orden numérico**:
 
-1. `CONADIS.Core/BaseDatos/01` … `10`, y para comprobar, `99_PruebaFlujoCompleto.sql`
-2. `CONADIS.Integracion/BaseDatos/01` … `07`, y para comprobar, `99_PruebaIntegracion.sql`
-3. `CONADIS.Web/BaseDatos/01` … `05`, y para comprobar, `99_PruebaPortal.sql`
-4. `CONADIS.Caja/BaseDatos/01` … `05`, y para comprobar, `99_PruebaCaja.sql`
+1. `CONADIS.Core/BaseDatos/01` … `11`, y para comprobar, `99_PruebaFlujoCompleto.sql`
+2. `CONADIS.Integracion/BaseDatos/01` … `08`, y para comprobar, `99_PruebaIntegracion.sql`
+3. `CONADIS.Web/BaseDatos/01` … `06`, y para comprobar, `99_PruebaPortal.sql`
+4. `CONADIS.Caja/BaseDatos/01` … `06`, y para comprobar, `99_PruebaCaja.sql`
 
 Los scripts se pueden volver a ejecutar sin problema (`CREATE OR ALTER` / `IF NOT EXISTS`).
 
@@ -99,11 +99,26 @@ Todos usan la contraseña **`Conadis2026!`**.
 6. **Nota de crédito y cierre:** emita una nota de crédito (E34) autorizada por `supervisor.caja`. Después haga el arqueo ciego y el cierre de caja; muestre el reporte de cierre.
 7. **Seguridad:** llame sin clave (responde 401) y con `institucion-vencida-2026` (responde 403). Revise la bitácora en `integ.Bitacora` y los logs en `dbo.Log4NetLog`.
 
-## 7. Pruebas automáticas
+## 7. Reportes (RDLC)
+
+Cada transacción tiene su reporte. Los diseños `.rdlc` están en la carpeta `Reportes/` de cada biblioteca de negocio
+(incrustados en la DLL) y se generan en **PDF o Excel** con el paquete **ReportViewerCore.NETCore**; cada uno lo alimenta
+un SP `ppRpt…`. Todos llevan el mismo encabezado (institución, módulo, filtros) y pie (quién lo generó, cuándo, página).
+
+| Módulo | Comprobante de cada transacción | Documentos | Reportes por período | Dónde |
+|---|---|---|---|---|
+| Core | `rptComprobanteTransaccion` (bitácora con huella SHA-256) | acuse de solicitud, informe de valoración, certificado/carnet, recibo de pago | expedientes por estado, estadística anonimizada, ingresos, carnets, indicadores, transacciones | Sistema interno: *Mis transacciones*, *Reportes*, expediente, auditoría |
+| Caja | `rptComprobanteTransaccionCaja` | e-CF impreso (factura y nota de crédito), cierre de caja | ingresos por servicio, transacciones | App de Caja: *Imprimir comprobante* y *Reportes y transacciones* |
+| Portal | `rptComprobanteOperacionPortal` | acuse del trámite con historial, comprobante del pago en línea, carnet digital | mi actividad | Portal: *Mi actividad*, detalle del trámite, pago, mi carnet |
+| Integración | `rptComprobanteIntegracion` | — | transacciones de interoperabilidad, pagos recibidos vs aplicados, disponibilidad de servicios | Sistema interno del Core → *Integración* (vía `api/v1/reportes`, ámbito `reportes`) |
+
+Generar un reporte también queda registrado en la bitácora del módulo.
+
+## 8. Pruebas automáticas
 
 En cada solución: *Prueba → Ejecutar todas las pruebas*. Las clases cuyo nombre contiene `BaseDatos` necesitan que los scripts del paso 1 se hayan ejecutado. La cadena de conexión se puede cambiar con estas variables de entorno: `CONADIS_WEB_PRUEBAS`, `CONADIS_CAJA_PRUEBAS`, etc.
 
-## 8. Códigos de error de negocio (`THROW`)
+## 9. Códigos de error de negocio (`THROW`)
 
 | Módulo | Rango |
 |---|---|

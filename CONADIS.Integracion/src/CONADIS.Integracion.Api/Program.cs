@@ -27,7 +27,7 @@ builder.Services.AddAuthorization(o =>
 {
     // Por defecto todo exige un sistema autenticado (salvo [AllowAnonymous]: /api/v1/salud)
     o.FallbackPolicy = new AuthorizationPolicyBuilder(ManejadorClientes.Esquema).RequireAuthenticatedUser().Build();
-    foreach (var ambito in new[] { Politicas.Portal, Politicas.Caja, Politicas.Firma })
+    foreach (var ambito in new[] { Politicas.Portal, Politicas.Caja, Politicas.Firma, Politicas.Reportes })
         o.AddPolicy(ambito, p => p.AddAuthenticationSchemes(ManejadorClientes.Esquema).RequireClaim(ManejadorClientes.ClaimAmbito, ambito));
 });
 

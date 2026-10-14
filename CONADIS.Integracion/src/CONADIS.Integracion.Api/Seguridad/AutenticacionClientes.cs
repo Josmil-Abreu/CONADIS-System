@@ -84,4 +84,5 @@ public static class Politicas
     public const string Portal = Ambitos.Portal;
     public const string Caja = Ambitos.Caja;
     public const string Firma = Ambitos.Firma;
+    public const string Reportes = Ambitos.Reportes;
 }

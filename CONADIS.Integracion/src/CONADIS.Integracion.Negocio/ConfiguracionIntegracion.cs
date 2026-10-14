@@ -63,6 +63,7 @@ public static class ConfiguracionIntegracion
 
         // ---- Casos de uso
         servicios.AddScoped<PuenteCore>();
+        servicios.AddScoped<ServicioReportesIntegracion>();
         servicios.AddScoped<ServicioIdentidad>();
         servicios.AddScoped<ServicioDiagnostico>();
         servicios.AddScoped<ServicioDgii>();

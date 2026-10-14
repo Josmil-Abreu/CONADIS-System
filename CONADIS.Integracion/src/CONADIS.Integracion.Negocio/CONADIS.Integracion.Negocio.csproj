@@ -26,10 +26,17 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <!-- Reportes RDLC en .NET moderno (el ReportViewer clásico solo existe para .NET Framework) -->
+    <PackageReference Include="ReportViewerCore.NETCore" Version="15.1.22" />
   </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="CONADIS.Integracion.Pruebas" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Los diseños .rdlc viajan dentro de la DLL: GeneradorReportes los lee como recurso incrustado -->
+    <EmbeddedResource Include="Reportes\*.rdlc" />
   </ItemGroup>
 
 </Project>
