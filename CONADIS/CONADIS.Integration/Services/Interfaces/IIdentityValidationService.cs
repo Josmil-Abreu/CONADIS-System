@@ -1,9 +1,8 @@
 namespace CONADIS.Integration.Services.Interfaces;
 
-using System;
+using CONADIS.Domain.Common;
 using System.Threading;
 using System.Threading.Tasks;
-using CONADIS.Domain.Common;
 
 /// <summary>
 /// Servicio de orquestación de validación de identidad.

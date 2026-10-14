@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CONADIS.Application.Dtos
+﻿namespace CONADIS.Application.Dtos
 {
     public record RegistrarSolicitudDto(
        string Cedula,

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CONADIS.Domain.Enums;
+﻿namespace CONADIS.Domain.Enums;
 
 public enum EstadoExpediente
 {

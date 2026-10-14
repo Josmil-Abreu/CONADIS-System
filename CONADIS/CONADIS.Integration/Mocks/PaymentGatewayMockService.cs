@@ -1,11 +1,11 @@
 namespace CONADIS.Integration.Mocks;
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using CONADIS.Integration.Models.Requests;
 using CONADIS.Integration.Models.Responses;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 /// <summary>Interfaz para el servicio mock de la pasarela de pago</summary>
 public interface IPaymentGatewayMockService
@@ -31,7 +31,7 @@ public class PaymentGatewayMockService : IPaymentGatewayMockService
         // Simular latencia de red
         await Task.Delay(Random.Shared.Next(300, 800), ct);
 
-        _logger.LogInformation("Mock Payment: Iniciando pago: TransactionId={TransactionId}, Amount={Amount}", 
+        _logger.LogInformation("Mock Payment: Iniciando pago: TransactionId={TransactionId}, Amount={Amount}",
             request.TransactionId, request.Amount);
 
         // Simular que el 90% de los pagos son exitosos
@@ -91,7 +91,7 @@ public class PaymentGatewayMockService : IPaymentGatewayMockService
     {
         await Task.Delay(Random.Shared.Next(300, 600), ct);
 
-        _logger.LogInformation("Mock Payment: Procesando reembolso: TransactionId={TransactionId}, Amount={Amount}", 
+        _logger.LogInformation("Mock Payment: Procesando reembolso: TransactionId={TransactionId}, Amount={Amount}",
             transactionId, amount);
 
         return new PaymentResponse

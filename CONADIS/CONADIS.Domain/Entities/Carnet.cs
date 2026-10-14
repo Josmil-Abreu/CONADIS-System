@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using CONADIS.Domain.Enums;
+﻿using CONADIS.Domain.Enums;
 
 namespace CONADIS.Domain.Entities;
 

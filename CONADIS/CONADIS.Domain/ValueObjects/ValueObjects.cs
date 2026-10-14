@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using CONADIS.Domain.Enums;
-
-namespace CONADIS.Domain.ValueObjects;
+﻿namespace CONADIS.Domain.ValueObjects;
 
 public record Cedula(string Valor)
 {
