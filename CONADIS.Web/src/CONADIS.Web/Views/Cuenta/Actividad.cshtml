@@ -1,0 +1,42 @@
+@using System.Data
+@model DataTable
+@{
+    ViewData["Title"] = "Mi actividad";
+    var desde = ((DateOnly)ViewBag.Desde).ToString("yyyy-MM-dd");
+    var hasta = ((DateOnly)ViewBag.Hasta).ToString("yyyy-MM-dd");
+}
+<h1 class="h2">Mi actividad</h1>
+<p>Todas las operaciones que hiciste en el portal. Cada una tiene su comprobante en PDF.</p>
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-sm-4 col-md-3"><label for="desde" class="form-label">Desde</label><input id="desde" name="desde" type="date" class="form-control" value="@desde" /></div>
+    <div class="col-sm-4 col-md-3"><label for="hasta" class="form-label">Hasta</label><input id="hasta" name="hasta" type="date" class="form-control" value="@hasta" /></div>
+    <div class="col-sm-4 col-md-2"><button class="btn btn-primary w-100">Ver</button></div>
+    <div class="col-md-4 d-flex gap-2">
+        <a class="btn btn-outline-primary" target="_blank" asp-action="ActividadArchivo" asp-route-desde="@desde" asp-route-hasta="@hasta" asp-route-formato="Pdf">Descargar PDF</a>
+        <a class="btn btn-outline-success" asp-action="ActividadArchivo" asp-route-desde="@desde" asp-route-hasta="@hasta" asp-route-formato="Excel">Excel</a>
+    </div>
+</form>
+@if (Model.Rows.Count == 0)
+{
+    <p class="text-muted">No hay operaciones en estas fechas.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <caption class="visually-hidden">Operaciones de la cuenta</caption>
+            <thead><tr><th scope="col">Fecha</th><th scope="col">Operación</th><th scope="col">Detalle</th><th scope="col">Comprobante</th></tr></thead>
+            <tbody>
+            @foreach (DataRow f in Model.Rows)
+            {
+                <tr>
+                    <td>@(f["Fecha"] is DateTime d ? d.ToString("dd/MM/yyyy HH:mm") : f["Fecha"])</td>
+                    <td>@f["Evento"]</td>
+                    <td>@f["Detalle"]</td>
+                    <td><a asp-action="Comprobante" asp-route-id="@f["EventoId"]" asp-route-formato="Pdf" target="_blank">PDF<span class="visually-hidden"> de la operación @f["EventoId"]</span></a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

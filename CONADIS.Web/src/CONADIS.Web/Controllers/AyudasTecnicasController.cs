@@ -10,7 +10,7 @@ namespace CONADIS.Web.Controllers;
 
 /// <summary>Solicitud de ayudas técnicas (requiere carnet vigente).</summary>
 [Authorize]
-public class AyudasTecnicasController(ServicioPortal portal, ServicioBorradores borradores) : ControladorPortal
+public class AyudasTecnicasController(ServicioPortal portal, ServicioBorradores borradores, ServicioReportesPortal reportes) : ControladorPortal
 {
     private static readonly Dictionary<CategoriaAyuda, string[]> Productos = new()
     {
@@ -93,6 +93,7 @@ public class AyudasTecnicasController(ServicioPortal portal, ServicioBorradores 
                 new SolicitudServicioPortal("AYUDA_TECNICA", Cuenta.Cedula, Cuenta.NombreCompleto, Cuenta.Correo, $"Ayuda técnica: {vm.Producto}", detalle),
                 ClaveIdempotencia("ayuda", $"{vm.Categoria}-{vm.Producto}-{DateTime.Today:yyyyMMdd}"), Ip, ct);
             await borradores.EliminarAsync(Cuenta.CuentaId, TiposBorrador.AyudaTecnica, ct);
+            await reportes.RegistrarOperacionAsync(Cuenta, "AyudaTecnicaSolicitada", $"Trámite {r.NumeroTramite} · {vm.Producto}", Ip, ct);
             return RedirectToAction(nameof(Confirmacion), new { id = r.NumeroTramite });
         }
         catch (ReglaNegocioException ex)

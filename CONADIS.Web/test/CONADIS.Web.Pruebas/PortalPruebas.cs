@@ -217,3 +217,45 @@ public class CuentasBaseDatosPruebas
         Assert.Null(await borradores.ObtenerAsync(cuenta.CuentaId, TiposBorrador.Certificacion));
     }
 }
+
+/// <summary>
+/// Reportes del portal armados con los datos de Integración: las columnas de cada DataTable deben coincidir
+/// con los campos del .rdlc (el sustituto del ReportViewer de estas pruebas lo comprueba; en Windows, el real).
+/// </summary>
+public class ReportesPortalPruebas
+{
+    private static readonly CONADIS.Web.Negocio.Reportes.EncabezadoReporte Encabezado = new("Portal Ciudadano", "Prueba");
+
+    [Fact]
+    public void Los_documentos_del_tramite_coinciden_con_su_rdlc()
+    {
+        var ahora = DateTimeOffset.Now;
+        var tramite = new TramiteCiudadano("TRA-1", "EXP-1", "40123456788", "Ciudadano Prueba", "EnEvaluacion", ahora, ahora, null, null, null,
+            "Sede Central", ahora.AddDays(3), null, [new HitoTramite("Solicitado", ahora, "Recibida")]);
+        var acuse = CONADIS.Web.Negocio.Reportes.GeneradorReportes.Generar("rptAcuseTramite", Encabezado, CONADIS.Web.Negocio.Reportes.FormatoReporte.Pdf,
+            ("Tramite", CONADIS.Web.Negocio.Reportes.GeneradorReportes.Tabla([tramite])),
+            ("Historial", CONADIS.Web.Negocio.Reportes.GeneradorReportes.Tabla(tramite.Historial)));
+        Assert.NotEmpty(acuse.Contenido);
+
+        var orden = new OrdenCobro("ORD-1", "DUP-CARNET", "Duplicado de carnet", "40123456788", "Ciudadano Prueba", null, 1, 500m, 500m, "Pagada",
+            ahora, ahora, null);
+        var pago = ServicioReportesPortal.TablaPago(orden, new PagoEnLinea(Guid.NewGuid(), "Aplicado", "AUT-1", "E320000000001"));
+        Assert.Equal("E320000000001", pago.Rows[0]["NumeroComprobante"]);
+        Assert.NotEmpty(CONADIS.Web.Negocio.Reportes.GeneradorReportes.Generar("rptComprobantePago", Encabezado,
+            CONADIS.Web.Negocio.Reportes.FormatoReporte.Excel, ("Datos", pago)).Contenido);
+
+        var carnet = CONADIS.Web.Negocio.Reportes.GeneradorReportes.Tabla([new CarnetCiudadano("CNDS-1", "EXP-1", "40123456788", "Ciudadano Prueba",
+            "Fisica", "Moderado", DateOnly.FromDateTime(DateTime.Today), null, "Vigente", "ABC123", "CERT-1")]);
+        carnet.Columns.Add("UrlVerificacion", typeof(string));
+        Assert.NotEmpty(CONADIS.Web.Negocio.Reportes.GeneradorReportes.Generar("rptCarnetDigital", Encabezado,
+            CONADIS.Web.Negocio.Reportes.FormatoReporte.Pdf, ("Datos", carnet)).Contenido);
+    }
+
+    [Fact]
+    public void Los_rdlc_del_portal_estan_incrustados()
+    {
+        var disponibles = CONADIS.Web.Negocio.Reportes.GeneradorReportes.Disponibles().ToList();
+        foreach (var r in new[] { "rptAcuseTramite", "rptComprobantePago", "rptCarnetDigital", "rptMiActividad", "rptComprobanteOperacionPortal" })
+            Assert.Contains(r, disponibles);
+    }
+}

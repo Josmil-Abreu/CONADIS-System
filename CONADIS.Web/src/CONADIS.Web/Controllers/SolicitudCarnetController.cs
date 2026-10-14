@@ -15,7 +15,8 @@ namespace CONADIS.Web.Controllers;
 /// Patrón por paso: GET muestra la pantalla, POST valida, guarda el borrador y redirige al siguiente.
 /// </summary>
 [Authorize]
-public class SolicitudCarnetController(ServicioPortal portal, ServicioBorradores borradores, ILogger<SolicitudCarnetController> logger)
+public class SolicitudCarnetController(ServicioPortal portal, ServicioBorradores borradores, ServicioReportesPortal reportes,
+    ILogger<SolicitudCarnetController> logger)
     : ControladorPortal
 {
     private const string ClaveBorrador = "SolicitudCarnet.Borrador";
@@ -379,6 +380,8 @@ public class SolicitudCarnetController(ServicioPortal portal, ServicioBorradores
         TempData["CitaFecha"] = borrador.CitaApoyos!.FechaCita?.ToString("o");
         TempData["CitaCentro"] = borrador.CitaApoyos.CentroValoracion;
 
+        await reportes.RegistrarOperacionAsync(Cuenta, "SolicitudEnviada",
+            $"Trámite {resultado.NumeroTramite} · expediente {resultado.NumeroExpediente} · {solicitud.Tipo}", Ip, ct);
         HttpContext.Session.Remove(ClaveBorrador);
         await borradores.EliminarAsync(Cuenta.CuentaId, TiposBorrador.Certificacion, ct);
 

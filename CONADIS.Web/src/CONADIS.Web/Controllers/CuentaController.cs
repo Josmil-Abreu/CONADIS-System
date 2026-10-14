@@ -3,6 +3,7 @@ using CONADIS.Web.Infraestructura;
 using CONADIS.Web.Models.ViewModels;
 using CONADIS.Web.Negocio.Datos;
 using CONADIS.Web.Negocio.Modelos;
+using CONADIS.Web.Negocio.Reportes;
 using CONADIS.Web.Negocio.Servicios;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -11,9 +12,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CONADIS.Web.Controllers;
 
-/// <summary>Inicio de sesión, registro y recuperación de contraseña (cuentas en CONADIS_WebDB).</summary>
-[AllowAnonymous]
-public class CuentaController(ServicioCuentas cuentas, IWebHostEnvironment entorno, IConfiguration config) : ControladorPortal
+/// <summary>
+/// Inicio de sesión, registro y recuperación de contraseña (cuentas en CONADIS_WebDB) y "Mi actividad".
+/// Las acciones son públicas salvo las marcadas con [Authorize] (el portal no tiene política global).
+/// </summary>
+public class CuentaController(ServicioCuentas cuentas, ServicioReportesPortal reportes, IWebHostEnvironment entorno, IConfiguration config) : ControladorPortal
 {
     // GET /Cuenta/IniciarSesion
     [HttpGet]
@@ -146,6 +149,30 @@ public class CuentaController(ServicioCuentas cuentas, IWebHostEnvironment entor
         HttpContext.Session.Clear();
         return RedirectToAction("Index", "Home");
     }
+
+    // GET /Cuenta/Actividad  → "Mi actividad": cada operación de la cuenta con su comprobante
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> Actividad(DateOnly? desde, DateOnly? hasta, CancellationToken ct)
+    {
+        var d = desde ?? DateOnly.FromDateTime(DateTime.Today.AddDays(-30));
+        var h = hasta ?? DateOnly.FromDateTime(DateTime.Today);
+        ViewBag.Desde = d;
+        ViewBag.Hasta = h;
+        return View(await reportes.ActividadAsync(Cuenta, d, h, ct));
+    }
+
+    // GET /Cuenta/ActividadArchivo?desde=...&hasta=...&formato=Pdf|Excel
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> ActividadArchivo(DateOnly desde, DateOnly hasta, FormatoReporte formato, CancellationToken ct)
+        => Archivo(await reportes.ActividadArchivoAsync(Cuenta, desde, hasta, formato, Ip, ct));
+
+    // GET /Cuenta/Comprobante/123  → comprobante de una operación de la cuenta
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> Comprobante(long id, FormatoReporte formato, CancellationToken ct)
+        => Archivo(await reportes.ComprobanteOperacionAsync(Cuenta, id, formato, Ip, ct));
 
     // GET /Cuenta/AccesoDenegado
     [HttpGet]

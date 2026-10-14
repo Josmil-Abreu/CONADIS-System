@@ -3,6 +3,7 @@ using System.Text.Json;
 using CONADIS.Web.Negocio.Datos;
 using CONADIS.Web.Negocio.Externos;
 using CONADIS.Web.Negocio.Modelos;
+using CONADIS.Web.Negocio.Reportes;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -45,6 +46,10 @@ public abstract class ControladorPortal : Controller
 
     /// <summary>Clave de idempotencia estable por formulario (evita dobles envíos al recargar o pulsar dos veces).</summary>
     protected string ClaveIdempotencia(string operacion, string referencia) => $"{operacion}-{Cuenta.CuentaId}-{referencia}";
+
+    /// <summary>PDF se muestra en el navegador (para ver o imprimir); Excel se descarga.</summary>
+    protected FileContentResult Archivo(ArchivoReporte a)
+        => a.TipoContenido == "application/pdf" ? File(a.Contenido, a.TipoContenido) : File(a.Contenido, a.TipoContenido, a.NombreArchivo);
 }
 
 /// <summary>

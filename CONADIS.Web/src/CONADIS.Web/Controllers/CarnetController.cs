@@ -2,6 +2,7 @@
 using CONADIS.Web.Models.ViewModels;
 using CONADIS.Web.Negocio.Datos;
 using CONADIS.Web.Negocio.Modelos;
+using CONADIS.Web.Negocio.Reportes;
 using CONADIS.Web.Negocio.Seguridad;
 using CONADIS.Web.Negocio.Servicios;
 using Microsoft.AspNetCore.Authorization;
@@ -11,7 +12,7 @@ namespace CONADIS.Web.Controllers;
 
 /// <summary>Mi carnet digital: ver, descargar y pedir duplicado.</summary>
 [Authorize]
-public class CarnetController(ServicioPortal portal) : ControladorPortal
+public class CarnetController(ServicioPortal portal, ServicioReportesPortal reportes) : ControladorPortal
 {
     // GET /Carnet  → "Mi carnet digital"
     [HttpGet]
@@ -26,30 +27,19 @@ public class CarnetController(ServicioPortal portal) : ControladorPortal
         return View(vm);
     }
 
-    // GET /Carnet/DescargarPdf
+    // GET /Carnet/DescargarPdf  → carnet digital (RDLC) con el código y el enlace de verificación
     [HttpGet]
     public async Task<IActionResult> DescargarPdf(CancellationToken ct)
     {
-        var vm = await ObtenerCarnetAsync(ct);
-        if (vm is null) return NotFound();
-
-        // Versión en texto; el PDF con el QR firmado lo genera el Core al emitir el carnet.
-        var bytes = System.Text.Encoding.UTF8.GetBytes(
-            $"CARNET PCD\n{vm.NombreCompleto}\nN.º {vm.NumeroCarnet}\nEmitido: {vm.FechaEmision:dd/MM/yyyy}\nVerificar: {vm.UrlVerificacion}");
-        return File(bytes, "text/plain", $"carnet-{vm.NumeroCarnet}.txt");
+        var c = await portal.MiCarnetAsync(Cuenta, Ip, ct);
+        if (c is null) return NotFound();
+        var url = Url.Action("Index", "Verificacion", new { codigo = c.CodigoVerificacion }, Request.Scheme) ?? "";
+        return Archivo(await reportes.CarnetAsync(Cuenta, c, url, FormatoReporte.Pdf, Ip, ct));
     }
 
-    // GET /Carnet/DescargarCertificado
+    // GET /Carnet/DescargarCertificado  → el mismo documento (incluye tipo, grado y n.º de certificado)
     [HttpGet]
-    public async Task<IActionResult> DescargarCertificado(CancellationToken ct)
-    {
-        var vm = await ObtenerCarnetAsync(ct);
-        if (vm is null) return NotFound();
-
-        var bytes = System.Text.Encoding.UTF8.GetBytes(
-            $"CERTIFICADO DE DISCAPACIDAD N.º {vm.NumeroCertificado}\n{vm.NombreCompleto}\nTipo: {vm.TipoDiscapacidad}\nGrado: {vm.Grado}");
-        return File(bytes, "text/plain", $"certificado-{vm.NumeroCertificado}.txt");
-    }
+    public Task<IActionResult> DescargarCertificado(CancellationToken ct) => DescargarPdf(ct);
 
     // GET /Carnet/SolicitarDuplicado
     [HttpGet]
@@ -83,6 +73,7 @@ public class CarnetController(ServicioPortal portal) : ControladorPortal
                 ConsentimientoDatos = true
             }, ClaveIdempotencia("duplicado", carnet.NumeroCarnet), Ip, ct);
 
+            await reportes.RegistrarOperacionAsync(Cuenta, "DuplicadoSolicitado", $"Trámite {r.NumeroTramite} · {vm.Motivo}", Ip, ct);
             if (r.NumeroOrden is null)
             {
                 TempData["Mensaje"] = $"Recibimos tu solicitud de duplicado (trámite {r.NumeroTramite}).";

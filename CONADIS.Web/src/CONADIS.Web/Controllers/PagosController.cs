@@ -1,7 +1,8 @@
-﻿using CONADIS.Web.Infraestructura;
+using CONADIS.Web.Infraestructura;
 using CONADIS.Web.Models.ViewModels;
 using CONADIS.Web.Negocio.Datos;
 using CONADIS.Web.Negocio.Modelos;
+using CONADIS.Web.Negocio.Reportes;
 using CONADIS.Web.Negocio.Servicios;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +14,7 @@ namespace CONADIS.Web.Controllers;
 /// La orden viene del Core y el cobro lo hace Integración con la pasarela (simulada en la demo).
 /// </summary>
 [Authorize]
-public class PagosController(ServicioPortal portal) : ControladorPortal
+public class PagosController(ServicioPortal portal, ServicioReportesPortal reportes) : ControladorPortal
 {
     /// <summary>
     /// Token que devolvería la pasarela al tokenizar la tarjeta en el navegador. El simulador de Integración
@@ -49,6 +50,8 @@ public class PagosController(ServicioPortal portal) : ControladorPortal
         try
         {
             var pago = await portal.PagarAsync(Cuenta, id, TokenDemo, $"pago-{id}-{intento}", Ip, ct);
+            await reportes.RegistrarOperacionAsync(Cuenta, "PagoEnLinea",
+                $"Orden {id} · RD$ {orden.Total:N2} · {pago.Estado} · e-NCF {pago.NumeroComprobante} · autorización {pago.CodigoAutorizacion}", Ip, ct);
             var vm = Vista(orden, pago.Estado == "Rechazado" ? "Fallida" : "Pagada");
             vm.Referencia = pago.NumeroComprobante;
             return View(nameof(Retorno), vm);
@@ -66,6 +69,15 @@ public class PagosController(ServicioPortal portal) : ControladorPortal
     {
         var orden = await ObtenerOrdenAsync(id, ct);
         return orden is null ? NotFound() : View(Vista(orden, orden.Estado == "Pagada" ? "Pagada" : "Fallida"));
+    }
+
+    // GET /Pagos/Comprobante/ORD-2026-000123?formato=Pdf|Excel  → comprobante del pago (RDLC)
+    [HttpGet]
+    public async Task<IActionResult> Comprobante(string id, FormatoReporte formato, CancellationToken ct)
+    {
+        var orden = await ObtenerOrdenAsync(id, ct);
+        if (orden is null) return NotFound();
+        return Archivo(await reportes.ComprobantePagoAsync(Cuenta, orden, null, formato, Ip, ct));
     }
 
     // POST /Pagos/Ventanilla  → "Pagar después en ventanilla"

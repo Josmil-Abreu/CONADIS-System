@@ -1,6 +1,7 @@
-﻿using CONADIS.Web.Infraestructura;
+using CONADIS.Web.Infraestructura;
 using CONADIS.Web.Models.ViewModels;
 using CONADIS.Web.Negocio.Datos;
+using CONADIS.Web.Negocio.Reportes;
 using CONADIS.Web.Negocio.Servicios;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +10,7 @@ namespace CONADIS.Web.Controllers;
 
 /// <summary>Panel "Mis trámites", detalle de un trámite y consulta sin cuenta (RF-WEB-02).</summary>
 [Authorize]
-public class TramitesController(ServicioPortal portal) : ControladorPortal
+public class TramitesController(ServicioPortal portal, ServicioReportesPortal reportes) : ControladorPortal
 {
     // GET /Tramites?estado=EnEvaluacion  → panel "Mis trámites"
     [HttpGet]
@@ -117,6 +118,7 @@ public class TramitesController(ServicioPortal portal) : ControladorPortal
             return View(vm);
         }
 
+        await reportes.RegistrarOperacionAsync(Cuenta, "CitaReprogramada", $"Trámite {vm.NumeroTramite} · {vm.NuevaFecha:dd/MM/yyyy HH:mm}", Ip, ct);
         TempData["Mensaje"] = "Tu cita fue reprogramada.";
         return RedirectToAction(nameof(Detalle), new { id = vm.NumeroTramite });
     }
@@ -138,24 +140,13 @@ public class TramitesController(ServicioPortal portal) : ControladorPortal
         return RedirectToAction(nameof(Detalle), new { id });
     }
 
-    // GET /Tramites/DescargarAcuse/TRA-2026-12345
+    // GET /Tramites/DescargarAcuse/TRA-2026-12345?formato=Pdf|Excel  → acuse con el historial (RDLC)
     [HttpGet]
-    public async Task<IActionResult> DescargarAcuse(string id, CancellationToken ct)
+    public async Task<IActionResult> DescargarAcuse(string id, FormatoReporte formato, CancellationToken ct)
     {
         var t = await portal.TramiteAsync(Cuenta, id, Ip, ct);
         if (t is null) return NotFound();
-
-        var texto = $"""
-            CONSEJO NACIONAL DE DISCAPACIDAD (CONADIS)
-            ACUSE DE RECIBO
-
-            Trámite:     {t.Numero}
-            Expediente:  {t.NumeroExpediente ?? "—"}
-            Titular:     {t.NombreCompleto}
-            Recibido el: {t.FechaRegistro.LocalDateTime:dd/MM/yyyy HH:mm}
-            Estado:      {t.Estado}
-            """;
-        return File(System.Text.Encoding.UTF8.GetBytes(texto), "text/plain", $"acuse-{t.Numero}.txt");
+        return Archivo(await reportes.AcuseTramiteAsync(Cuenta, t, formato, Ip, ct));
     }
 
     // GET /Tramites/Apelar/TRA-2026-12345
@@ -187,6 +178,7 @@ public class TramitesController(ServicioPortal portal) : ControladorPortal
             return View(vm);
         }
 
+        await reportes.RegistrarOperacionAsync(Cuenta, "ApelacionEnviada", $"Trámite {vm.NumeroTramite}", Ip, ct);
         TempData["Mensaje"] = "Recibimos tu apelación.";
         return RedirectToAction(nameof(Detalle), new { id = vm.NumeroTramite });
     }
