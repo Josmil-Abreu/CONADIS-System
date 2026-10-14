@@ -53,6 +53,11 @@ public sealed class CajaController(PuenteCore core, ServicioPagos pagos, Servici
         return p is null ? NotFound() : Ok(new RespuestaRecepcionPago(p.TransaccionId, p.Estado, false, p.FechaRecepcion, p.Detalle));
     }
 
+    /// <summary>Consulta un RNC en la DGII (factura de crédito fiscal, CU-02 paso 4).</summary>
+    [HttpGet("rnc/{rnc}")]
+    public Task<RespuestaRnc> Rnc(string rnc, CancellationToken ct)
+        => dgii.ConsultarRncAsync(rnc, Contexto("Factura de crédito fiscal"), ct);
+
     /// <summary>
     /// Envía un e-CF a la DGII. Si la DGII no responde, devuelve 503: la Caja deja el comprobante
     /// "en contingencia" y lo reenvía más tarde (el cobro ya está hecho).
