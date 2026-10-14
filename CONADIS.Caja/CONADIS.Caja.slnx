@@ -5,6 +5,7 @@
     <File Path="BaseDatos/03_Procedimientos.sql" />
     <File Path="BaseDatos/04_DatosIniciales.sql" />
     <File Path="BaseDatos/05_PermisosAplicacion.sql" />
+    <File Path="BaseDatos/06_Procedimientos_Reportes.sql" />
     <File Path="BaseDatos/99_PruebaCaja.sql" />
   </Folder>
   <Folder Name="/src/">
