@@ -32,6 +32,10 @@ Los scripts se pueden volver a ejecutar sin problema (`CREATE OR ALTER` / `IF NO
 
 ## 2. Orden de arranque
 
+**Atajo:** doble clic en `iniciar-todo.bat` (raíz del repositorio). Compila las 4 soluciones y abre cada programa en su propia ventana, en el orden correcto; `detener-todo.bat` los cierra todos. Así no hace falta abrir Visual Studio cuatro veces.
+
+Manualmente:
+
 1. **Core API**: proyecto `CONADIS.Core.Api` → https://localhost:7101/swagger
 2. **Integración API**: proyecto `CONADIS.Integracion.Api` → https://localhost:7102/swagger. El estado del sistema se ve en `GET /api/v1/salud`.
 3. **Servicio de Integración**: proyecto `CONADIS.Integracion.Servicio`. Entrega la cola de pagos y mensajes al Core y ejecuta las tareas programadas. Se puede correr como consola o instalarlo con `Scripts/instalar-servicio.bat` (como administrador).
