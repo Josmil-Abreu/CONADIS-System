@@ -40,6 +40,9 @@ internal static class Program
         servicios.AddTransient<FormPrincipal>();
         servicios.AddTransient<FormAbrirCaja>();
         servicios.AddTransient<FormReportes>();
+        servicios.AddTransient<FormCobro>();
+        servicios.AddTransient<FormArqueoCierre>();
+        servicios.AddTransient<FormUsuarios>();
 
         using var proveedor = servicios.BuildServiceProvider();
         var log = proveedor.GetRequiredService<ILogger<FormPrincipal>>();

@@ -38,7 +38,7 @@ En SSMS o en Visual Studio (Explorador de objetos de SQL Server), ejecute los sc
 1. `CONADIS.Core/BaseDatos/01` … `11`, y para comprobar, `99_PruebaFlujoCompleto.sql`
 2. `CONADIS.Integracion/BaseDatos/01` … `09`, y para comprobar, `99_PruebaIntegracion.sql`
 3. `CONADIS.Web/BaseDatos/01` … `07`, y para comprobar, `99_PruebaPortal.sql`
-4. `CONADIS.Caja/BaseDatos/01` … `06`, y para comprobar, `99_PruebaCaja.sql`
+4. `CONADIS.Caja/BaseDatos/01` … `07`, y para comprobar, `99_PruebaCaja.sql`
 
 Los scripts se pueden volver a ejecutar sin problema (`CREATE OR ALTER` / `IF NOT EXISTS`).
 

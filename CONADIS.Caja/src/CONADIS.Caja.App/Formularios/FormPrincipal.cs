@@ -5,9 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace CONADIS.Caja.App.Formularios;
 
 /// <summary>
-/// Pantalla principal de la Caja. Esqueleto: barra de estado (usuario, caja, sincronización),
-/// comprobantes de la sesión y botones para cada caso de uso. Las pantallas de cobro y de arqueo/cierre
-/// están indicadas con el servicio que deben llamar (ver CobrarAsync y ArqueoAsync).
+/// Pantalla principal de la Caja: barra de estado (usuario, caja, sincronización),
+/// comprobantes de la sesión y botones para cada caso de uso.
 /// </summary>
 public sealed class FormPrincipal : Form
 {
@@ -26,6 +25,7 @@ public sealed class FormPrincipal : Form
     private readonly Button _imprimir = Ui.Boton("Imprimir comprobante");
     private readonly Button _reportes = Ui.Boton("Reportes y transacciones", 200);
     private readonly Button _miActividad = Ui.Boton("Mi actividad (PDF)");
+    private readonly Button _usuarios = Ui.Boton("Usuarios");
 
     private readonly DataGridView _comprobantes = new()
     {
@@ -57,7 +57,7 @@ public sealed class FormPrincipal : Form
         Font = Ui.Normal;
 
         var barraBotones = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(12) };
-        barraBotones.Controls.AddRange(new Control[] { _abrirCaja, _cobrar, _imprimir, _arqueo, _reportes, _miActividad, _sincronizar, _salir });
+        barraBotones.Controls.AddRange(new Control[] { _abrirCaja, _cobrar, _imprimir, _arqueo, _reportes, _miActividad, _usuarios, _sincronizar, _salir });
 
         var titulo = new Label
         {
@@ -86,6 +86,11 @@ public sealed class FormPrincipal : Form
         _miActividad.Click += async (_, _) => await Ui.EjecutarAsync(_miActividad, async () =>
             Ui.Abrir(await _reportesCaja.MiActividadAsync(_contexto.UsuarioActual,
                 DateOnly.FromDateTime(DateTime.Today.AddDays(-30)), DateOnly.FromDateTime(DateTime.Today))));
+        _usuarios.Click += (_, _) =>
+        {
+            using var form = _servicios.GetRequiredService<FormUsuarios>();
+            form.ShowDialog(this);
+        };
         _reportes.Click += (_, _) =>
         {
             using var form = _servicios.GetRequiredService<FormReportes>();
@@ -124,35 +129,20 @@ public sealed class FormPrincipal : Form
         if (form.ShowDialog(this) == DialogResult.OK) _ = RefrescarComprobantesAsync();
     }
 
-    /// <summary>
-    /// PANTALLA PENDIENTE (CU-02): formulario de cobro. Debe:
-    ///  1. Opcional: buscar la orden con _cobro.BuscarOrdenAsync(numero) para cobrar el monto exacto.
-    ///  2. Mostrar las tasas de _cobro.TasasAsync() y calcular el total con ReglasCobro.Calcular(...).
-    ///  3. Armar un SolicitudCobro (cliente, líneas, medio de pago, monto recibido / autorización / referencia).
-    ///  4. Llamar _cobro.CobrarAsync(_contexto.SesionActual, _contexto.UsuarioActual, solicitud) y mostrar el e-CF devuelto.
-    ///  5. Imprimir el comprobante: Ui.Abrir(await _reportesCaja.FacturaAsync(_contexto.UsuarioActual, emitido.FacturaId)).
-    /// </summary>
+    /// <summary>Pantalla de cobro (CU-02): imprime el e-CF al terminar.</summary>
     private async Task CobrarAsync()
     {
         _ = _contexto.SesionActual;   // avisa "No hay una caja abierta" si corresponde
-        MessageBox.Show(this, "La pantalla de cobro está pendiente. Ver el comentario de FormPrincipal.CobrarAsync.",
-            Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        using (var form = _servicios.GetRequiredService<FormCobro>()) form.ShowDialog(this);
         await RefrescarComprobantesAsync();
     }
 
-    /// <summary>
-    /// PANTALLA PENDIENTE (RF-CAJ-03): arqueo ciego y cierre. Debe:
-    ///  1. Pedir lo contado por medio de pago (sin mostrar lo esperado) y llamar _sesiones.ArquearAsync(...).
-    ///  2. Mostrar el ResultadoArqueo; si hay diferencias, pedir la justificación.
-    ///  3. Pedir usuario y contraseña del supervisor (ServicioAutenticacionCaja.AutorizarSupervisorAsync)
-    ///     y llamar _sesiones.CerrarAsync(...). Luego Ui.Abrir(await _reportesCaja.CierreAsync(usuario, sesionId)) imprime el cierre.
-    /// </summary>
+    /// <summary>Arqueo ciego por denominación y cierre aprobado por supervisor (RF-CAJ-03).</summary>
     private async Task ArqueoAsync()
     {
         _ = _contexto.SesionActual;
-        MessageBox.Show(this, "La pantalla de arqueo y cierre está pendiente. Ver el comentario de FormPrincipal.ArqueoAsync.",
-            Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
-        await Task.CompletedTask;
+        using (var form = _servicios.GetRequiredService<FormArqueoCierre>()) form.ShowDialog(this);
+        await RefrescarComprobantesAsync();
     }
 
     /// <summary>Representación impresa del e-CF seleccionado (cobro o nota de crédito).</summary>
@@ -187,6 +177,7 @@ public sealed class FormPrincipal : Form
         _cobrar.Enabled = _contexto.PuedeCobrar;
         _imprimir.Enabled = _contexto.Sesion is not null;
         _arqueo.Enabled = _contexto.Sesion is not null;
+        _usuarios.Visible = _contexto.Usuario?.Rol == RolesCaja.Administrador;
     }
 
     /// <summary>Llega desde un hilo de fondo: se pasa al hilo de la pantalla con BeginInvoke.</summary>

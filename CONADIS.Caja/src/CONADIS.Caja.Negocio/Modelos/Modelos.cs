@@ -124,3 +124,13 @@ public sealed record OrdenParaCobro(string NumeroOrden, string TasaCodigo, strin
     int Cantidad, decimal Total, string Estado);
 
 public sealed record RespuestaRnc(bool Existe, bool Activo, string? RazonSocial);
+
+// ------------------------------------------------------------------ administración de usuarios
+
+public sealed record UsuarioCajaDetalle(int UsuarioId, string Username, string NombreCompleto, string Rol, bool Activo,
+    DateTimeOffset? BloqueadoHasta, DateTimeOffset? UltimoAcceso)
+{
+    public bool Bloqueado => BloqueadoHasta is { } b && b > DateTimeOffset.Now;
+}
+
+public sealed record DatosUsuarioCaja(int? UsuarioId, string Username, string NombreCompleto, string Rol, bool Activo, string? Contrasena);
