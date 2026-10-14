@@ -4,6 +4,7 @@ using CONADIS.Caja.Negocio.Datos;
 using CONADIS.Caja.Negocio.Externos;
 using CONADIS.Caja.Negocio.Modelos;
 using CONADIS.Caja.Negocio.Servicios;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CONADIS.Caja.Pruebas;
@@ -166,6 +167,53 @@ public class ClienteIntegracionCajaPruebas
         var ex = await Assert.ThrowsAsync<ReglaNegocioException>(() =>
             Ayudas.Cliente(IntegracionFalsa.Fija(HttpStatusCode.UnprocessableEntity, """{"detail":"Tasa inactiva"}""")).RncAsync("1"));
         Assert.Equal("Tasa inactiva", ex.Message);
+    }
+}
+
+/// <summary>Estado de la aplicación y sincronización periódica (sin base de datos).</summary>
+public class AplicacionCajaPruebas
+{
+    [Fact]
+    public void El_contexto_avisa_cambios_y_exige_caja_abierta_para_cobrar()
+    {
+        var ctx = new ContextoCaja();
+        var cambios = 0;
+        ctx.Cambio += (_, _) => cambios++;
+
+        ctx.IniciarSesion(new UsuarioCaja(1, "cajero", "Cajero Demo", RolesCaja.Cajero));
+        Assert.True(ctx.HayUsuario);
+        Assert.False(ctx.PuedeCobrar);
+        Assert.Equal(58002, Assert.Throws<ReglaNegocioException>(() => _ = ctx.SesionActual).Codigo);
+
+        ctx.EstablecerSesion(new SesionCaja(7, 1, "CAJA-01", "Sede central", 1000m, EstadosSesion.Abierta, DateTimeOffset.Now));
+        Assert.True(ctx.PuedeCobrar);
+        ctx.CerrarSesion();
+        Assert.False(ctx.HayUsuario);
+        Assert.Equal(3, cambios);
+    }
+
+    [Fact]
+    public async Task Sin_conexion_la_sincronizacion_avisa_y_no_falla()
+    {
+        var servicios = new ServiceCollection();
+        servicios.AddLogging();
+        servicios.AddSingleton(new EjecutorSp(Ayudas.Cadena));
+        servicios.AddSingleton(Ayudas.Cliente(IntegracionFalsa.Caida()));
+        servicios.AddTransient<ServicioCobro>();
+        servicios.AddTransient<SincronizadorCaja>();
+        servicios.AddSingleton<SincronizacionPeriodica>();
+        await using var sp = servicios.BuildServiceProvider();
+
+        var sync = sp.GetRequiredService<SincronizacionPeriodica>();
+        ResultadoSincronizacion? recibido = null;
+        sync.Resultado += (_, r) => recibido = r;
+
+        var r = await sync.SincronizarAhoraAsync();
+        Assert.NotNull(r);
+        Assert.False(r!.Conectado);
+        Assert.Same(r, recibido);
+        Assert.Contains(r.Avisos, a => a.Contains("Sin conexión"));
+        Assert.NotNull(sync.UltimaVez);
     }
 }
 

@@ -14,8 +14,8 @@ Web y Caja **nunca** hablan con el Core directamente: siempre pasan por Integrac
 |---|---|---|---|
 | Core | `CONADIS.Core/CONADIS.Core.slnx` | `CONADIS_CoreDB` | https://localhost:7101 |
 | Integración | `CONADIS.Integracion/CONADIS.Integracion.slnx` | `CONADIS_IntegracionDB` | https://localhost:7102 (API) + servicio de Windows |
-| Web | `CONADIS.Web/CONADIS.Web.slnx` | `CONADIS_WebDB` | lógica en `CONADIS.Web.Negocio` |
-| Caja | `CONADIS.Caja/CONADIS.Caja.slnx` | `CONADIS_CajaDB` | lógica en `CONADIS.Caja.Negocio` |
+| Web | `CONADIS.Web/CONADIS.Web.slnx` | `CONADIS_WebDB` | Portal https://localhost:7122 (lógica en `CONADIS.Web.Negocio`) |
+| Caja | `CONADIS.Caja/CONADIS.Caja.slnx` | `CONADIS_CajaDB` | App Windows Forms `CONADIS.Caja.App` (lógica en `CONADIS.Caja.Negocio`) |
 
 Requisitos: Visual Studio 2026 (.NET 10) y SQL Server LocalDB (`(localdb)\MSSQLLocalDB`).
 
@@ -35,7 +35,11 @@ Los scripts se pueden volver a ejecutar sin problema (`CREATE OR ALTER` / `IF NO
 1. **Core API**: proyecto `CONADIS.Core.Api` → https://localhost:7101/swagger
 2. **Integración API**: proyecto `CONADIS.Integracion.Api` → https://localhost:7102/swagger. El estado del sistema se ve en `GET /api/v1/salud`.
 3. **Servicio de Integración**: proyecto `CONADIS.Integracion.Servicio`. Entrega la cola de pagos y mensajes al Core y ejecuta las tareas programadas. Se puede correr como consola o instalarlo con `Scripts/instalar-servicio.bat` (como administrador).
-4. **Portal Web** y **Caja**: sus pantallas usan `AgregarLogicaPortal(...)` y `AgregarLogicaCaja(...)`.
+4. **Portal Web**: proyecto `CONADIS.Web` (perfil **https**) → https://localhost:7122.
+5. **Caja**: proyecto `CONADIS.Caja.App` (Windows Forms). Inicia sesión con `cajero` / `Conadis2026!`, abre la caja y sincroniza sola cada 60 s.
+
+> Cada solución en su **propia ventana de Visual Studio** (o con *Iniciar sin depurar*, Ctrl+F5): al cerrar una solución se detiene lo que estaba ejecutando.
+> Si el navegador o Integración no confían en `https://localhost`, ejecute `dotnet dev-certs https --trust`.
 
 Para arrancar varios proyectos a la vez: en Visual Studio, clic derecho en la solución → *Configurar proyectos de inicio* → *Varios proyectos de inicio*.
 

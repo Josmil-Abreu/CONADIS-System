@@ -30,6 +30,8 @@ public static class ConfiguracionCaja
         servicios.AddTransient<ServicioCobro>();
         servicios.AddTransient<SincronizadorCaja>();
         servicios.AddTransient<ServicioReportesCaja>();
+        servicios.AddSingleton<ContextoCaja>();
+        servicios.AddSingleton<SincronizacionPeriodica>();
         return servicios;
     }
 }

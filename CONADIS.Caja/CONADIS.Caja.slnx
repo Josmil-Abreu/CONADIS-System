@@ -8,6 +8,7 @@
     <File Path="BaseDatos/99_PruebaCaja.sql" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/CONADIS.Caja.App/CONADIS.Caja.App.csproj" />
     <Project Path="src/CONADIS.Caja.Negocio/CONADIS.Caja.Negocio.csproj" />
   </Folder>
   <Folder Name="/test/">
