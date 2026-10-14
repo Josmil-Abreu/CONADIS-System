@@ -1,5 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
+  <!--
+    Portal Ciudadano (MVC). Las pantallas llaman a CONADIS.Web.Negocio, que habla con
+    CONADIS_WebDB (cuentas, borradores) y con Integración (https://localhost:7102) para todo lo demás.
+  -->
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
@@ -7,9 +12,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CONADIS.Application\CONADIS.Application.csproj" />
-    <ProjectReference Include="..\CONADIS.Infrastructure\CONADIS.Infrastructure.csproj" />
-    <ProjectReference Include="..\CONADIS.Integration\CONADIS.Integration.csproj" />
+    <ProjectReference Include="..\CONADIS.Web.Negocio\CONADIS.Web.Negocio.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="log4net.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

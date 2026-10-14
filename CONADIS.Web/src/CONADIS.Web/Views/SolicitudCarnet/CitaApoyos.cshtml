@@ -1,7 +1,10 @@
-﻿@model CitaApoyosVM
+@model CitaApoyosVM
 @{
     ViewData["Title"] = "Solicitud: cita y apoyos";
-    var centros = new[] { "Centro de valoración Santo Domingo", "Centro de valoración Santiago", "Centro de valoración San Francisco de Macorís" };
+    // Centros reales del Core (vía Integración); si no responde, se muestran los de ejemplo.
+    var centros = ViewBag.Centros as IEnumerable<string> is { } reales && reales.Any()
+        ? reales
+        : new[] { "Centro de valoración Santo Domingo", "Centro de valoración Santiago", "Centro de valoración San Francisco de Macorís" };
 }
 
 <h1 class="h2">Solicitud de certificación y carnet</h1>

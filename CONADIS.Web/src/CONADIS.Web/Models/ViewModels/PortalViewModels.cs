@@ -1,10 +1,50 @@
-﻿using CONADIS.Application.Dtos;
+using CONADIS.Web.Negocio.Modelos;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
 
 namespace CONADIS.Web.Models.ViewModels;
 
 // ================= Trámites =================
+
+/// <summary>
+/// Datos del trámite tal como los usan las vistas (Detalle y Consultar). Se arma desde el TramiteCiudadano
+/// que devuelve Integración, así las vistas no dependen del contrato de la API.
+/// </summary>
+public class ExpedienteVista
+{
+    public string NumeroExpediente { get; set; } = string.Empty;   // número del trámite (es el id de las rutas)
+    public string? NumeroExpedienteCore { get; set; }
+    public string Cedula { get; set; } = string.Empty;
+    public string NombreCompleto { get; set; } = string.Empty;
+    public string Estado { get; set; } = string.Empty;
+    public DateTimeOffset FechaSolicitud { get; set; }
+    public DateTimeOffset FechaActualizacion { get; set; }
+    public string? TipoDiscapacidad { get; set; }
+    public string? GradoDiscapacidad { get; set; }
+    public string? NumeroCarnet { get; set; }
+    public string? CentroValoracion { get; set; }
+    public DateTimeOffset? FechaCita { get; set; }
+    public string? Observaciones { get; set; }
+    public IReadOnlyList<HitoTramite> Historial { get; set; } = [];
+
+    public static ExpedienteVista Desde(TramiteCiudadano t) => new()
+    {
+        NumeroExpediente = t.Numero,
+        NumeroExpedienteCore = t.NumeroExpediente,
+        Cedula = t.Cedula,
+        NombreCompleto = t.NombreCompleto,
+        Estado = t.Estado,
+        FechaSolicitud = t.FechaRegistro,
+        FechaActualizacion = t.FechaActualizacion,
+        TipoDiscapacidad = t.TipoDiscapacidad,
+        GradoDiscapacidad = t.GradoDiscapacidad,
+        NumeroCarnet = t.NumeroCarnet,
+        CentroValoracion = t.CentroValoracion,
+        FechaCita = t.FechaCita,
+        Observaciones = t.Observaciones,
+        Historial = t.Historial
+    };
+}
 public class TramiteFilaVM
 {
     public string Numero { get; set; } = string.Empty;
@@ -27,7 +67,7 @@ public class MisTramitesVM
 
 public class DetalleTramiteVM
 {
-    [ValidateNever] public ExpedienteDetalleDto Expediente { get; set; } = default!;
+    [ValidateNever] public ExpedienteVista Expediente { get; set; } = default!;
     public bool PuedeApelar => Expediente.Estado == "Rechazado";
     public bool TieneCarnet => !string.IsNullOrEmpty(Expediente.NumeroCarnet);
 }
@@ -41,7 +81,7 @@ public class ConsultarTramiteVM
     [RegularExpression(@"^\d{3}-?\d{7}-?\d{1}$", ErrorMessage = "La cédula debe tener 11 dígitos.")]
     public string Cedula { get; set; } = string.Empty;
 
-    public ExpedienteDetalleDto? Resultado { get; set; }
+    public ExpedienteVista? Resultado { get; set; }
 }
 
 public class CambiarCitaVM

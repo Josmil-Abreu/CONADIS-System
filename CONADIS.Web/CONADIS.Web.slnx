@@ -8,6 +8,7 @@
     <File Path="BaseDatos/99_PruebaPortal.sql" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/CONADIS.Web/CONADIS.Web.csproj" />
     <Project Path="src/CONADIS.Web.Negocio/CONADIS.Web.Negocio.csproj" />
   </Folder>
   <Folder Name="/test/">

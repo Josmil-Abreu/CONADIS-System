@@ -1,20 +1,20 @@
-﻿using CONADIS.Web.Extensions;
+﻿using System.Security.Claims;
+using CONADIS.Web.Infraestructura;
 using CONADIS.Web.Models.ViewModels;
+using CONADIS.Web.Negocio.Datos;
+using CONADIS.Web.Negocio.Modelos;
+using CONADIS.Web.Negocio.Servicios;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace CONADIS.Web.Controllers;
 
-/// <summary>Inicio de sesión, registro y recuperación de contraseña.</summary>
+/// <summary>Inicio de sesión, registro y recuperación de contraseña (cuentas en CONADIS_WebDB).</summary>
 [AllowAnonymous]
-public class CuentaController : Controller
+public class CuentaController(ServicioCuentas cuentas, IWebHostEnvironment entorno) : ControladorPortal
 {
-    // TODO (capa Application): cuando exista IAutenticacionService / IUsuarioService,
-    // inyectarlo aquí y reemplazar las partes marcadas como SIMULADO.
-
     // GET /Cuenta/IniciarSesion
     [HttpGet]
     public IActionResult IniciarSesion(string? returnUrl = null)
@@ -28,23 +28,19 @@ public class CuentaController : Controller
     // POST /Cuenta/IniciarSesion
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> IniciarSesion(IniciarSesionVM vm)
+    public async Task<IActionResult> IniciarSesion(IniciarSesionVM vm, CancellationToken ct)
     {
         if (!ModelState.IsValid) return View(vm);
 
-        var cedula = vm.Cedula.Replace("-", "");
-
-        // SIMULADO: acepta cualquier cédula válida. Reemplazar por la validación real
-        // (usuario + hash de contraseña + bloqueo tras 5 intentos fallidos por 15 min).
-        var claims = new List<Claim>
+        // Bloqueo tras varios intentos fallidos, hash PBKDF2 y mensaje genérico: todo en ServicioCuentas.
+        var r = await cuentas.IniciarSesionAsync(vm.Cedula.Replace("-", ""), vm.Contrasena, Ip, ct);
+        if (!r.Exito || r.Cuenta is null)
         {
-            new(ClaimTypes.NameIdentifier, cedula),
-            new(ClaimTypes.Name, "Ciudadano " + cedula[^4..]),
-            new(ClaimsExtensions.ClaimCedula, cedula),
-            new(ClaimTypes.Role, "Ciudadano")
-        };
+            ModelState.AddModelError(string.Empty, r.Mensaje ?? "No se pudo iniciar sesión.");
+            return View(vm);
+        }
 
-        await FirmarAsync(claims);
+        await FirmarAsync(r.Cuenta);
 
         if (!string.IsNullOrEmpty(vm.ReturnUrl) && Url.IsLocalUrl(vm.ReturnUrl))
             return LocalRedirect(vm.ReturnUrl);
@@ -60,38 +56,50 @@ public class CuentaController : Controller
     // POST /Cuenta/Registro
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Registro(CrearCuentaVM vm)
+    public async Task<IActionResult> Registro(CrearCuentaVM vm, CancellationToken ct)
     {
-        // Validaciones que dependen del tipo de cuenta
-        if (vm.TipoCuenta == TipoCuenta.Empresa && string.IsNullOrWhiteSpace(vm.Rnc))
-            ModelState.AddModelError(nameof(vm.Rnc), "Escribe el RNC de la empresa.");
+        if (vm.TipoCuenta == TipoCuenta.Empresa)
+            ModelState.AddModelError(nameof(vm.Rnc),
+                "Las cuentas de empresa todavía no se crean en línea. Solicite la certificación de accesibilidad en cualquier sede del CONADIS.");
         if (vm.TipoCuenta != TipoCuenta.Empresa && string.IsNullOrWhiteSpace(vm.Cedula))
             ModelState.AddModelError(nameof(vm.Cedula), "Escribe tu cédula.");
 
         if (!ModelState.IsValid) return View(vm);
 
-        // SIMULADO: aquí iría IUsuarioService.RegistrarAsync(...) (y validación del RNC con la DGII).
-        var claims = new List<Claim> { new(ClaimTypes.Email, vm.Email) };
-
-        if (vm.TipoCuenta == TipoCuenta.Empresa)
+        try
         {
-            claims.Add(new(ClaimTypes.NameIdentifier, vm.Rnc!));
-            claims.Add(new(ClaimTypes.Name, "Empresa " + vm.Rnc));
-            claims.Add(new(ClaimsExtensions.ClaimRnc, vm.Rnc!));
-            claims.Add(new(ClaimTypes.Role, "Empresa"));
-            await FirmarAsync(claims);
-            return RedirectToAction("Index", "Certificaciones", new { area = "Empresas" });
+            // Valida la cédula con la JCE (vía Integración), la fortaleza de la contraseña y que no exista otra cuenta.
+            var cedula = vm.Cedula!.Replace("-", "");
+            var registro = await cuentas.RegistrarAsync(
+                new DatosRegistro(cedula, vm.Email, null, vm.Contrasena, vm.ConfirmarContrasena, AceptaTerminos: true), Ip, ct);
+
+            var login = await cuentas.IniciarSesionAsync(cedula, vm.Contrasena, Ip, ct);
+            if (login.Cuenta is not null) await FirmarAsync(login.Cuenta);
+
+            TempData["Mensaje"] = registro.EstadoIdentidad == "Validada"
+                ? $"Bienvenido(a), {registro.NombreCompleto}. Tu cuenta fue creada."
+                : "Tu cuenta fue creada. Validaremos tu identidad con la JCE y te avisaremos.";
+
+            // En desarrollo no se envían correos: se muestra el enlace de verificación para probarlo.
+            if (entorno.IsDevelopment())
+                TempData["Aviso"] = $"(Desarrollo) Enlace de verificación del correo: {Url.Action(nameof(VerificarCorreo), null, new { token = registro.TokenVerificacion }, Request.Scheme)}";
+
+            return RedirectToAction("Index", "Tramites");
         }
+        catch (ReglaNegocioException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            return View(vm);
+        }
+    }
 
-        var cedula = vm.Cedula!.Replace("-", "");
-        claims.Add(new(ClaimTypes.NameIdentifier, cedula));
-        claims.Add(new(ClaimTypes.Name, "Ciudadano " + cedula[^4..]));
-        claims.Add(new(ClaimsExtensions.ClaimCedula, cedula));
-        claims.Add(new(ClaimTypes.Role, vm.TipoCuenta == TipoCuenta.Tutor ? "Tutor" : "Ciudadano"));
-        await FirmarAsync(claims);
-
-        TempData["Mensaje"] = "Tu cuenta fue creada.";
-        return RedirectToAction("Index", "Tramites");
+    // GET /Cuenta/VerificarCorreo?token=...
+    [HttpGet]
+    public async Task<IActionResult> VerificarCorreo(string token, CancellationToken ct)
+    {
+        await cuentas.VerificarCorreoAsync(token, ct);
+        TempData["Mensaje"] = "Tu correo quedó verificado.";
+        return RedirectToAction(nameof(IniciarSesion));
     }
 
     // GET /Cuenta/OlvideContrasena
@@ -101,13 +109,16 @@ public class CuentaController : Controller
     // POST /Cuenta/OlvideContrasena
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult OlvideContrasena(OlvideContrasenaVM vm)
+    public async Task<IActionResult> OlvideContrasena(OlvideContrasenaVM vm, CancellationToken ct)
     {
         if (!ModelState.IsValid) return View(vm);
 
-        // TODO: IUsuarioService.EnviarEnlaceRecuperacionAsync(vm.Email)
+        var token = await cuentas.SolicitarRecuperacionAsync(vm.Email, ct);
+
         // Por seguridad, siempre se muestra el mismo mensaje exista o no el correo.
         TempData["Mensaje"] = "Si el correo está registrado, te enviamos un enlace para cambiar tu contraseña.";
+        if (token is not null && entorno.IsDevelopment())
+            TempData["Aviso"] = $"(Desarrollo) Código de recuperación: {token}";
         return RedirectToAction(nameof(IniciarSesion));
     }
 
@@ -125,11 +136,9 @@ public class CuentaController : Controller
     [HttpGet]
     public IActionResult AccesoDenegado() => View();
 
-    private Task FirmarAsync(IEnumerable<Claim> claims)
+    private Task FirmarAsync(CuentaSesion cuenta)
     {
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        return HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            new ClaimsPrincipal(identity));
+        var identidad = new ClaimsIdentity(SesionCiudadano.Claims(cuenta), CookieAuthenticationDefaults.AuthenticationScheme);
+        return HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identidad));
     }
 }

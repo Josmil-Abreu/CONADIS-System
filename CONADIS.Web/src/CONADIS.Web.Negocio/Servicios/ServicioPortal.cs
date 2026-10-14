@@ -44,6 +44,25 @@ public sealed class ServicioPortal(ClienteSnd snd)
     public Task<TramiteCiudadano?> TramiteAsync(CuentaSesion c, string numero, string? ip = null, CancellationToken ct = default)
         => snd.GetAsync<TramiteCiudadano>($"{Base}/ciudadanos/{c.Cedula}/tramites/{Uri.EscapeDataString(numero.Trim())}", Ctx(c, ip), ct);
 
+    /// <summary>
+    /// Consulta pública "¿cómo va mi trámite?" sin cuenta: exige la cédula del titular junto con el número,
+    /// así no basta con adivinar números de trámite. Null si no coinciden.
+    /// </summary>
+    public Task<TramiteCiudadano?> ConsultarPublicoAsync(string cedula, string numero, string? ip = null, CancellationToken ct = default)
+    {
+        var c = ValidadorCedula.Normalizar(cedula);
+        if (!ValidadorCedula.EsValida(c) || string.IsNullOrWhiteSpace(numero)) return Task.FromResult<TramiteCiudadano?>(null);
+        return snd.GetAsync<TramiteCiudadano>($"{Base}/ciudadanos/{c}/tramites/{Uri.EscapeDataString(numero.Trim())}", new ContextoPortal(c, ip), ct);
+    }
+
+    /// <summary>Identidad en la JCE (vía Integración) para prellenar el asistente de solicitud. Null si no se pudo consultar.</summary>
+    public Task<IdentidadJce?> IdentidadAsync(string cedula, string? ip = null, CancellationToken ct = default)
+    {
+        var c = ValidadorCedula.Normalizar(cedula);
+        if (!ValidadorCedula.EsValida(c)) throw new ReglaNegocioException(0, "La cédula no es válida. Revise los 11 dígitos.");
+        return snd.GetAsync<IdentidadJce>($"{Base}/identidad/{c}", new ContextoPortal(c, ip), ct);
+    }
+
     public Task<CarnetCiudadano?> MiCarnetAsync(CuentaSesion c, string? ip = null, CancellationToken ct = default)
         => snd.GetAsync<CarnetCiudadano>($"{Base}/ciudadanos/{c.Cedula}/carnet", Ctx(c, ip), ct);
 

@@ -1,6 +1,9 @@
-﻿using CONADIS.Application.Interfaces;
-using CONADIS.Web.Extensions;
+﻿using CONADIS.Web.Infraestructura;
 using CONADIS.Web.Models.ViewModels;
+using CONADIS.Web.Negocio.Datos;
+using CONADIS.Web.Negocio.Modelos;
+using CONADIS.Web.Negocio.Seguridad;
+using CONADIS.Web.Negocio.Servicios;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,15 +11,8 @@ namespace CONADIS.Web.Controllers;
 
 /// <summary>Mi carnet digital: ver, descargar y pedir duplicado.</summary>
 [Authorize]
-public class CarnetController : Controller
+public class CarnetController(ServicioPortal portal) : ControladorPortal
 {
-    private readonly ISolicitudExpedienteService _solicitudes;
-
-    public CarnetController(ISolicitudExpedienteService solicitudes)
-    {
-        _solicitudes = solicitudes;
-    }
-
     // GET /Carnet  → "Mi carnet digital"
     [HttpGet]
     public async Task<IActionResult> Index(CancellationToken ct)
@@ -37,9 +33,9 @@ public class CarnetController : Controller
         var vm = await ObtenerCarnetAsync(ct);
         if (vm is null) return NotFound();
 
-        // TODO: ICarnetPdfService.GenerarAsync(...) con el QR firmado (IFirmaDigitalService).
+        // Versión en texto; el PDF con el QR firmado lo genera el Core al emitir el carnet.
         var bytes = System.Text.Encoding.UTF8.GetBytes(
-            $"CARNET PCD\n{vm.NombreCompleto}\nN.º {vm.NumeroCarnet}\nVerificar: {vm.UrlVerificacion}");
+            $"CARNET PCD\n{vm.NombreCompleto}\nN.º {vm.NumeroCarnet}\nEmitido: {vm.FechaEmision:dd/MM/yyyy}\nVerificar: {vm.UrlVerificacion}");
         return File(bytes, "text/plain", $"carnet-{vm.NumeroCarnet}.txt");
     }
 
@@ -50,9 +46,8 @@ public class CarnetController : Controller
         var vm = await ObtenerCarnetAsync(ct);
         if (vm is null) return NotFound();
 
-        // TODO: generar el PDF real del certificado de discapacidad.
         var bytes = System.Text.Encoding.UTF8.GetBytes(
-            $"CERTIFICADO DE DISCAPACIDAD\n{vm.NombreCompleto}\nTipo: {vm.TipoDiscapacidad}\nGrado: {vm.Grado}");
+            $"CERTIFICADO DE DISCAPACIDAD N.º {vm.NumeroCertificado}\n{vm.NombreCompleto}\nTipo: {vm.TipoDiscapacidad}\nGrado: {vm.Grado}");
         return File(bytes, "text/plain", $"certificado-{vm.NumeroCertificado}.txt");
     }
 
@@ -60,44 +55,78 @@ public class CarnetController : Controller
     [HttpGet]
     public IActionResult SolicitarDuplicado() => View(new SolicitarDuplicadoVM());
 
-    // POST /Carnet/SolicitarDuplicado  → crea la orden de cobro y manda a Pagos
+    // POST /Carnet/SolicitarDuplicado  → registra la solicitud de duplicado; el Core crea la orden de cobro
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult SolicitarDuplicado(SolicitarDuplicadoVM vm)
+    public async Task<IActionResult> SolicitarDuplicado(SolicitarDuplicadoVM vm, CancellationToken ct)
     {
         if (!ModelState.IsValid) return View(vm);
 
-        // TODO: IPagoService.CrearOrdenAsync("DUPLICADO_CARNET", User.Cedula(), vm.Motivo)
-        var numeroOrden = $"ORD-{DateTime.Now:yyyyMMddHHmmss}";
-        return RedirectToAction("Index", "Pagos", new { id = numeroOrden });
+        var carnet = await portal.MiCarnetAsync(Cuenta, Ip, ct);
+        if (carnet is null)
+        {
+            TempData["Aviso"] = "No tienes un carnet emitido del cual pedir duplicado.";
+            return RedirectToAction("Index", "Tramites");
+        }
+
+        var (nombres, apellidos) = Separar(carnet.NombreCompleto);
+        try
+        {
+            var r = await portal.EnviarSolicitudAsync(Cuenta, new SolicitudPortal
+            {
+                Tipo = "Duplicado",
+                Cedula = Cuenta.Cedula,
+                Nombres = nombres,
+                Apellidos = apellidos,
+                Correo = Cuenta.Correo,
+                MotivoDuplicado = vm.Motivo,
+                ConsentimientoDatos = true
+            }, ClaveIdempotencia("duplicado", carnet.NumeroCarnet), Ip, ct);
+
+            if (r.NumeroOrden is null)
+            {
+                TempData["Mensaje"] = $"Recibimos tu solicitud de duplicado (trámite {r.NumeroTramite}).";
+                return RedirectToAction("Detalle", "Tramites", new { id = r.NumeroTramite });
+            }
+            return RedirectToAction("Index", "Pagos", new { id = r.NumeroOrden });
+        }
+        catch (ReglaNegocioException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            return View(vm);
+        }
     }
 
     // ---------------------------------------------------------------
 
     private async Task<MiCarnetVM?> ObtenerCarnetAsync(CancellationToken ct)
     {
-        // TODO (capa Application): ICarnetService.ObtenerVigentePorCedulaAsync(User.Cedula()).
-        // Mientras tanto se usa el número de expediente guardado como claim (si existe).
-        var numero = User.NumeroExpediente();
-        if (string.IsNullOrEmpty(numero)) return null;
-
-        var r = await _solicitudes.ObtenerPorNumeroAsync(numero, ct);
-        if (r.IsFailure || string.IsNullOrEmpty(r.Value.NumeroCarnet)) return null;
-
-        var e = r.Value;
-        var cedula = User.Cedula() ?? e.Cedula;
-        var codigo = e.NumeroCarnet!;
+        var c = await portal.MiCarnetAsync(Cuenta, Ip, ct);
+        if (c is null) return null;
 
         return new MiCarnetVM
         {
-            NombreCompleto = User.Identity?.Name ?? e.NombreCompleto,
-            CedulaEnmascarada = cedula.Length == 11 ? $"***-***{cedula[6..10]}-{cedula[10]}" : "***",
-            NumeroCarnet = e.NumeroCarnet!,
-            Estado = e.Estado,
-            TipoDiscapacidad = e.TipoDiscapacidad,
-            Grado = e.GradoDiscapacidad,
-            CodigoVerificacion = codigo,
-            UrlVerificacion = Url.Action("Index", "Verificacion", new { codigo }, Request.Scheme) ?? ""
+            NombreCompleto = c.NombreCompleto,
+            CedulaEnmascarada = c.Cedula.Length == 11 ? $"***-***{c.Cedula[6..10]}-{c.Cedula[10]}" : "***",
+            NumeroCarnet = c.NumeroCarnet,
+            FechaEmision = c.FechaEmision,
+            FechaVencimiento = c.FechaVencimiento,
+            Estado = c.Estado,
+            TipoDiscapacidad = c.TipoDiscapacidad,
+            Grado = c.GradoDiscapacidad,
+            NumeroCertificado = c.NumeroCertificado,
+            CodigoVerificacion = c.CodigoVerificacion,
+            UrlVerificacion = Url.Action("Index", "Verificacion", new { codigo = c.CodigoVerificacion }, Request.Scheme) ?? ""
         };
+    }
+
+    /// <summary>"María Pérez Gómez" → ("María", "Pérez Gómez"). Con 4+ palabras, dos nombres y el resto apellidos.</summary>
+    internal static (string Nombres, string Apellidos) Separar(string nombreCompleto)
+    {
+        var partes = nombreCompleto.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var n = partes.Length >= 4 ? 2 : 1;
+        return partes.Length <= 1
+            ? (nombreCompleto.Trim(), "-")
+            : (string.Join(' ', partes[..n]), string.Join(' ', partes[n..]));
     }
 }
