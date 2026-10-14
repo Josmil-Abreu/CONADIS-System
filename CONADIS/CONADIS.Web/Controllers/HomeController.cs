@@ -1,6 +1,6 @@
-using System.Diagnostics;
 using CONADIS.Web.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace CONADIS.Web.Controllers;
 

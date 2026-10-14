@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using CONADIS.Domain.Entities;
+﻿using CONADIS.Domain.Entities;
 using CONADIS.Domain.Enums;
-using CONADIS.Domain.ValueObjects;
-using Xunit;
 
 namespace CONADIS.UnitTests.Domain;
 
@@ -34,7 +29,7 @@ public class ExpedienteTests
         Assert.True(resultado.IsFailure);
         Assert.Contains("evaluación CIF debe estar consolidada", resultado.Error);
     }
-    
+
 
     [Fact]
     public void Carnetizar_ExpedienteEnEstadoSolicitado_DebeFallarPorTransicionInvalida()

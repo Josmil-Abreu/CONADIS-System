@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using CONADIS.Application.Dtos;
+﻿using CONADIS.Application.Dtos;
 using CONADIS.Application.Interfaces;
 using CONADIS.Application.Services;
 using CONADIS.Domain.Entities;
 using Moq;
-using Xunit;
 
 namespace CONADIS.UnitTests.Application;
 

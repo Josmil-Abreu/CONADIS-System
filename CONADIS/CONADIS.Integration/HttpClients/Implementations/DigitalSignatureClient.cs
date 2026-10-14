@@ -1,10 +1,5 @@
 namespace CONADIS.Integration.HttpClients.Implementations;
 
-using System;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using CONADIS.Integration.Configuration;
 using CONADIS.Integration.Exceptions;
 using CONADIS.Integration.HttpClients.Interfaces;
@@ -12,6 +7,11 @@ using CONADIS.Integration.Models.Requests;
 using CONADIS.Integration.Models.Responses;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 /// <summary>Implementación real del cliente HTTP para firmas digitales (DGII)</summary>
 public class DigitalSignatureClient : IDigitalSignatureClient

@@ -1,5 +1,4 @@
 ﻿using CONADIS.Application.Interfaces;
-using CONADIS.Web.Extensions;
 using CONADIS.Web.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

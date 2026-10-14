@@ -1,10 +1,10 @@
-﻿using System.Security.Claims;
-using CONADIS.Web.Extensions;
+﻿using CONADIS.Web.Extensions;
 using CONADIS.Web.Models.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace CONADIS.Web.Controllers;
 

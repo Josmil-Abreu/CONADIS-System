@@ -1,13 +1,13 @@
 namespace CONADIS.Integration.HttpClients.Implementations;
 
+using CONADIS.Integration.HttpClients.Interfaces;
+using CONADIS.Integration.Mocks;
+using CONADIS.Integration.Models.Requests;
+using CONADIS.Integration.Models.Responses;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using CONADIS.Integration.HttpClients.Interfaces;
-using CONADIS.Integration.Models.Requests;
-using CONADIS.Integration.Models.Responses;
-using CONADIS.Integration.Mocks;
-using Microsoft.Extensions.Logging;
 
 /// <summary>
 /// Adaptador que implementa IPaymentGatewayClient usando el mock.

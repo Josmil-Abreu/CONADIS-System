@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using CONADIS.Application.Interfaces;
+﻿using CONADIS.Application.Interfaces;
 using CONADIS.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 

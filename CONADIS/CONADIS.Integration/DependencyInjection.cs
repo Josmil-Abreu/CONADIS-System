@@ -1,17 +1,16 @@
 namespace CONADIS.Integration;
 
-using System;
 using CONADIS.Integration.Configuration;
-using CONADIS.Integration.HttpClients.Interfaces;
 using CONADIS.Integration.HttpClients.Implementations;
+using CONADIS.Integration.HttpClients.Interfaces;
 using CONADIS.Integration.Mocks;
-using CONADIS.Integration.Services.Interfaces;
 using CONADIS.Integration.Services.Implementations;
+using CONADIS.Integration.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Polly;
-using Polly.CircuitBreaker;
 using Polly.Extensions.Http;
+using System;
 
 /// <summary>
 /// Extensiones para registrar los servicios de integración en el contenedor de inyección de dependencias.

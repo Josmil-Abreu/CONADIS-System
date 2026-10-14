@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using CONADIS.Application.Dtos;
+using CONADIS.Application.Interfaces;
 using CONADIS.Domain.Common;
 using CONADIS.Domain.Entities;
 using CONADIS.Domain.Enums;
-using CONADIS.Application.Dtos;
-using CONADIS.Application.Interfaces;
 
 namespace CONADIS.Application.Services;
 

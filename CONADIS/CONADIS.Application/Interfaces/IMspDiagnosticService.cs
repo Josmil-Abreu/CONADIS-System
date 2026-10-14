@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CONADIS.Application.Interfaces;
+﻿namespace CONADIS.Application.Interfaces;
 
 public record DiagnosticoMspDto(
     string Cedula,
