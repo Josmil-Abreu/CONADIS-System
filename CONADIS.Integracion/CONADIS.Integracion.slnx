@@ -12,6 +12,7 @@
   <Folder Name="/src/">
     <Project Path="src/CONADIS.Integracion.Api/CONADIS.Integracion.Api.csproj" />
     <Project Path="src/CONADIS.Integracion.Negocio/CONADIS.Integracion.Negocio.csproj" />
+    <Project Path="src/CONADIS.Integracion.Servicio/CONADIS.Integracion.Servicio.csproj" />
   </Folder>
   <Folder Name="/test/">
     <Project Path="test/CONADIS.Integracion.Pruebas/CONADIS.Integracion.Pruebas.csproj" />

@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <!--
+    CONADIS.Integracion.Servicio: servicio de Windows del módulo de Integración (tolerancia a fallos).
+    Corre en segundo plano, sin interfaz:
+      - entrega al Core los mensajes de la cola (pagos de la Caja) con reintentos crecientes;
+      - envía las notificaciones (correo/SMS simulados en la carpeta "buzon");
+      - revalida con la JCE las identidades pendientes;
+      - marca los carnets vencidos, limpia datos antiguos y vigila el certificado de firma.
+    Se puede ejecutar con F5 (como consola) o instalar como servicio de Windows (Scripts/instalar-servicio.bat).
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>CONADIS.Integracion.Servicio</RootNamespace>
+    <UserSecretsId>conadis-integracion-servicio</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CONADIS.Integracion.Negocio\CONADIS.Integracion.Negocio.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="log4net.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Scripts\*.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
