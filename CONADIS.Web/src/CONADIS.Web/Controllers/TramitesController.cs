@@ -1,6 +1,8 @@
 using CONADIS.Web.Infraestructura;
 using CONADIS.Web.Models.ViewModels;
 using CONADIS.Web.Negocio.Datos;
+using CONADIS.Web.Negocio.Externos;
+using CONADIS.Web.Negocio.Modelos;
 using CONADIS.Web.Negocio.Reportes;
 using CONADIS.Web.Negocio.Servicios;
 using Microsoft.AspNetCore.Authorization;
@@ -10,15 +12,29 @@ namespace CONADIS.Web.Controllers;
 
 /// <summary>Panel "Mis trámites", detalle de un trámite y consulta sin cuenta (RF-WEB-02).</summary>
 [Authorize]
-public class TramitesController(ServicioPortal portal, ServicioReportesPortal reportes) : ControladorPortal
+public class TramitesController(ServicioPortal portal, ServicioReportesPortal reportes, BandejaSalida bandeja) : ControladorPortal
 {
     // GET /Tramites?estado=EnEvaluacion  → panel "Mis trámites"
     [HttpGet]
     public async Task<IActionResult> Index(string? estado, CancellationToken ct)
     {
-        var tramites = await portal.MisTramitesAsync(Cuenta, Ip, ct);
-        var carnet = await portal.MiCarnetAsync(Cuenta, Ip, ct);
-        var avisos = await portal.AvisosAsync(Cuenta, 5, ct);
+        // Lo pendiente de envío está en la base del portal: se muestra aunque el resto del sistema esté caído.
+        ViewBag.Pendientes = await bandeja.PendientesAsync(Cuenta.CuentaId, ct);
+
+        List<TramiteResumen> tramites;
+        CarnetCiudadano? carnet;
+        List<AvisoPortal> avisos;
+        try
+        {
+            tramites = await portal.MisTramitesAsync(Cuenta, Ip, ct);
+            carnet = await portal.MiCarnetAsync(Cuenta, Ip, ct);
+            avisos = await portal.AvisosAsync(Cuenta, 5, ct);
+        }
+        catch (SndNoDisponibleException)
+        {
+            TempData["Aviso"] ??= "No pudimos consultar tus trámites porque el sistema central no está disponible. Intenta en unos minutos.";
+            return View(new MisTramitesVM { FiltroEstado = estado, EstadoCarnet = "No disponible por el momento" });
+        }
 
         var vm = new MisTramitesVM
         {
@@ -110,7 +126,14 @@ public class TramitesController(ServicioPortal portal, ServicioReportesPortal re
 
         try
         {
-            await portal.ReprogramarCitaAsync(Cuenta, vm.NumeroTramite, new DateTimeOffset(vm.NuevaFecha!.Value), Ip, ct);
+            var fecha = new DateTimeOffset(vm.NuevaFecha!.Value);
+            var envio = await bandeja.EnviarOEncolarAsync(Cuenta, portal.PeticionCita(Cuenta, vm.NumeroTramite, fecha),
+                async () => { await portal.ReprogramarCitaAsync(Cuenta, vm.NumeroTramite, fecha, Ip, ct); return true; }, Ip, ct);
+            if (envio.EnCola)
+            {
+                TempData["Aviso"] = $"El sistema central no está disponible. Tu cambio de cita quedó guardado (envío N.º {envio.EnvioId}) y se enviará automáticamente.";
+                return RedirectToAction(nameof(Index));
+            }
         }
         catch (ReglaNegocioException ex)
         {
@@ -170,7 +193,13 @@ public class TramitesController(ServicioPortal portal, ServicioReportesPortal re
         try
         {
             // El Core valida el plazo de 30 días desde el dictamen.
-            await portal.ApelarAsync(Cuenta, vm.NumeroTramite, vm.Motivo, Ip, ct);
+            var envio = await bandeja.EnviarOEncolarAsync(Cuenta, portal.PeticionApelacion(Cuenta, vm.NumeroTramite, vm.Motivo),
+                async () => { await portal.ApelarAsync(Cuenta, vm.NumeroTramite, vm.Motivo, Ip, ct); return true; }, Ip, ct);
+            if (envio.EnCola)
+            {
+                TempData["Aviso"] = $"El sistema central no está disponible. Tu apelación quedó guardada (envío N.º {envio.EnvioId}) y se enviará automáticamente.";
+                return RedirectToAction(nameof(Index));
+            }
         }
         catch (ReglaNegocioException ex)
         {

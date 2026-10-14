@@ -10,7 +10,8 @@ namespace CONADIS.Web.Controllers;
 
 /// <summary>Solicitud de ayudas técnicas (requiere carnet vigente).</summary>
 [Authorize]
-public class AyudasTecnicasController(ServicioPortal portal, ServicioBorradores borradores, ServicioReportesPortal reportes) : ControladorPortal
+public class AyudasTecnicasController(ServicioPortal portal, ServicioBorradores borradores, ServicioReportesPortal reportes, BandejaSalida bandeja)
+    : ControladorPortal
 {
     private static readonly Dictionary<CategoriaAyuda, string[]> Productos = new()
     {
@@ -89,10 +90,18 @@ public class AyudasTecnicasController(ServicioPortal portal, ServicioBorradores 
             """;
         try
         {
-            var r = await portal.EnviarServicioAsync(Cuenta,
-                new SolicitudServicioPortal("AYUDA_TECNICA", Cuenta.Cedula, Cuenta.NombreCompleto, Cuenta.Correo, $"Ayuda técnica: {vm.Producto}", detalle),
-                ClaveIdempotencia("ayuda", $"{vm.Categoria}-{vm.Producto}-{DateTime.Today:yyyyMMdd}"), Ip, ct);
+            var solicitud = new SolicitudServicioPortal("AYUDA_TECNICA", Cuenta.Cedula, Cuenta.NombreCompleto, Cuenta.Correo,
+                $"Ayuda técnica: {vm.Producto}", detalle);
+            var clave = ClaveIdempotencia("ayuda", $"{vm.Categoria}-{vm.Producto}-{DateTime.Today:yyyyMMdd}");
+            var envio = await bandeja.EnviarOEncolarAsync(Cuenta, portal.PeticionServicio(solicitud, clave),
+                () => portal.EnviarServicioAsync(Cuenta, solicitud, clave, Ip, ct), Ip, ct);
             await borradores.EliminarAsync(Cuenta.CuentaId, TiposBorrador.AyudaTecnica, ct);
+            if (envio.EnCola)
+            {
+                TempData["Aviso"] = $"El sistema central no está disponible. Tu solicitud quedó guardada (envío N.º {envio.EnvioId}) y se enviará automáticamente.";
+                return RedirectToAction("Index", "Tramites");
+            }
+            var r = envio.Valor!;
             await reportes.RegistrarOperacionAsync(Cuenta, "AyudaTecnicaSolicitada", $"Trámite {r.NumeroTramite} · {vm.Producto}", Ip, ct);
             return RedirectToAction(nameof(Confirmacion), new { id = r.NumeroTramite });
         }

@@ -259,3 +259,40 @@ public class ReportesPortalPruebas
             Assert.Contains(r, disponibles);
     }
 }
+
+/// <summary>
+/// Prueba de caída (CONADIS_WebDB, scripts 01 a 07): con Integración caída la solicitud queda en la bandeja de salida
+/// y, cuando Integración vuelve, se entrega sola sin duplicarse.
+/// </summary>
+public class BandejaSalidaBaseDatosPruebas
+{
+    private readonly EjecutorSp _db = new(Ayudas.Cadena);
+
+    [Fact]
+    public async Task Sin_conexion_se_guarda_y_al_volver_se_entrega()
+    {
+        var (caido, _) = Ayudas.Snd(HttpStatusCode.ServiceUnavailable, """{"detail":"Core no disponible"}""");
+        var cuenta = (await new ServicioCuentas(_db, caido).IniciarSesionAsync("40123456788", "Conadis2026!", "127.0.0.1")).Cuenta!;
+        var portal = new ServicioPortal(caido);
+        var solicitud = new SolicitudPortal
+        {
+            Tipo = "Certificacion", Cedula = cuenta.Cedula, Nombres = "Ciudadano", Apellidos = "Prueba", ConsentimientoDatos = true
+        };
+        var clave = "prueba-bandeja-" + Guid.NewGuid().ToString("N");
+
+        // 1) Integración caída: no se pierde, queda en cola
+        var envio = await new BandejaSalida(_db, caido).EnviarOEncolarAsync(cuenta, portal.PeticionSolicitud(cuenta, solicitud, clave),
+            () => portal.EnviarSolicitudAsync(cuenta, solicitud, clave), "127.0.0.1");
+        Assert.True(envio.EnCola);
+        Assert.Contains(await new BandejaSalida(_db, caido).PendientesAsync(cuenta.CuentaId), p => p.EnvioId == envio.EnvioId && p.Estado == "Pendiente");
+
+        // 2) Integración vuelve: el trabajador lo entrega con la MISMA clave de idempotencia
+        var (arriba, falsa) = Ayudas.Snd(HttpStatusCode.Created, """{"numeroTramite":"TRA-PRUEBA","numeroExpediente":"EXP-PRUEBA","fechaRegistro":"2026-10-14T10:00:00-04:00"}""");
+        await _db.EjecutarAsync("web.ppEnvio_RegistrarFallo",
+            [Parametro.EnteroLargo("@EnvioId", envio.EnvioId), Parametro.Texto("@Error", "adelantar para la prueba", 500)]);
+        await Task.Delay(TimeSpan.FromSeconds(16));   // primer reintento: 15 s
+        Assert.True(await new BandejaSalida(_db, arriba).ProcesarAsync() >= 1);
+        Assert.Equal(clave, falsa.Peticion!.Headers.GetValues("Idempotency-Key").Single());
+        Assert.Contains(await new BandejaSalida(_db, arriba).PendientesAsync(cuenta.CuentaId), p => p.EnvioId == envio.EnvioId && p.Estado == "Enviado");
+    }
+}

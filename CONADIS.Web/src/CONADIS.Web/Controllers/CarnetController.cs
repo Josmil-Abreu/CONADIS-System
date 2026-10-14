@@ -1,4 +1,4 @@
-﻿using CONADIS.Web.Infraestructura;
+using CONADIS.Web.Infraestructura;
 using CONADIS.Web.Models.ViewModels;
 using CONADIS.Web.Negocio.Datos;
 using CONADIS.Web.Negocio.Modelos;
@@ -12,7 +12,7 @@ namespace CONADIS.Web.Controllers;
 
 /// <summary>Mi carnet digital: ver, descargar y pedir duplicado.</summary>
 [Authorize]
-public class CarnetController(ServicioPortal portal, ServicioReportesPortal reportes) : ControladorPortal
+public class CarnetController(ServicioPortal portal, ServicioReportesPortal reportes, BandejaSalida bandeja) : ControladorPortal
 {
     // GET /Carnet  → "Mi carnet digital"
     [HttpGet]
@@ -62,7 +62,7 @@ public class CarnetController(ServicioPortal portal, ServicioReportesPortal repo
         var (nombres, apellidos) = Separar(carnet.NombreCompleto);
         try
         {
-            var r = await portal.EnviarSolicitudAsync(Cuenta, new SolicitudPortal
+            var solicitud = new SolicitudPortal
             {
                 Tipo = "Duplicado",
                 Cedula = Cuenta.Cedula,
@@ -71,7 +71,17 @@ public class CarnetController(ServicioPortal portal, ServicioReportesPortal repo
                 Correo = Cuenta.Correo,
                 MotivoDuplicado = vm.Motivo,
                 ConsentimientoDatos = true
-            }, ClaveIdempotencia("duplicado", carnet.NumeroCarnet), Ip, ct);
+            };
+            var clave = ClaveIdempotencia("duplicado", carnet.NumeroCarnet);
+            var envio = await bandeja.EnviarOEncolarAsync(Cuenta, portal.PeticionSolicitud(Cuenta, solicitud, clave),
+                () => portal.EnviarSolicitudAsync(Cuenta, solicitud, clave, Ip, ct), Ip, ct);
+            if (envio.EnCola)
+            {
+                TempData["Aviso"] = $"El sistema central no está disponible. Tu solicitud de duplicado quedó guardada (envío N.º {envio.EnvioId}); " +
+                                    "cuando se envíe, la orden de pago aparecerá en Mis trámites.";
+                return RedirectToAction("Index", "Tramites");
+            }
+            var r = envio.Valor!;
 
             await reportes.RegistrarOperacionAsync(Cuenta, "DuplicadoSolicitado", $"Trámite {r.NumeroTramite} · {vm.Motivo}", Ip, ct);
             if (r.NumeroOrden is null)

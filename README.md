@@ -36,8 +36,8 @@ Requisitos: Visual Studio 2026 (.NET 10) y SQL Server LocalDB (`(localdb)\MSSQLL
 En SSMS o en Visual Studio (Explorador de objetos de SQL Server), ejecute los scripts **en orden numérico**:
 
 1. `CONADIS.Core/BaseDatos/01` … `11`, y para comprobar, `99_PruebaFlujoCompleto.sql`
-2. `CONADIS.Integracion/BaseDatos/01` … `08`, y para comprobar, `99_PruebaIntegracion.sql`
-3. `CONADIS.Web/BaseDatos/01` … `06`, y para comprobar, `99_PruebaPortal.sql`
+2. `CONADIS.Integracion/BaseDatos/01` … `09`, y para comprobar, `99_PruebaIntegracion.sql`
+3. `CONADIS.Web/BaseDatos/01` … `07`, y para comprobar, `99_PruebaPortal.sql`
 4. `CONADIS.Caja/BaseDatos/01` … `06`, y para comprobar, `99_PruebaCaja.sql`
 
 Los scripts se pueden volver a ejecutar sin problema (`CREATE OR ALTER` / `IF NOT EXISTS`).
@@ -114,11 +114,37 @@ un SP `ppRpt…`. Todos llevan el mismo encabezado (institución, módulo, filtr
 
 Generar un reporte también queda registrado en la bitácora del módulo.
 
-## 8. Pruebas automáticas
+## 8. Prueba de caídas: "tumbar los demás módulos y que no se pierda nada"
+
+| Módulo que queda arriba | Qué hace sin los demás | Dónde espera lo pendiente | Cuándo se sincroniza |
+|---|---|---|---|
+| **Caja** | Cobra con su base local; e-CF en *Contingencia* (E32 si no puede verificar RNC) | `caja.LineaFactura` (Pendiente) y `caja.Factura` (Contingencia) | Cada 60 s intenta; al subir Integración envía cobros y e-CF |
+| **Portal** | Login, borradores y envío de solicitudes, apelaciones, cambios de cita, ayudas técnicas y duplicados; las cuentas nuevas quedan con identidad *Pendiente* | `web.Envio` (bandeja de salida), visible en *Mis trámites* | Cada 30 s; al subir Integración + Core se entregan solos (misma clave de idempotencia: sin duplicados) |
+| **Integración** | Acepta cobros de la Caja (202) aunque el Core esté caído | `integ.Mensaje` (outbox) | Reintenta cada 30 s como máximo y **nunca** da un pago por perdido mientras el Core esté caído |
+| **Core** | Su sistema interno funciona completo con su base | Notificaciones en el Core | Integración las recoge al volver |
+
+No se dejan en cola, a propósito: el **pago con tarjeta en línea** (necesita la autorización del banco en el momento; el portal
+avisa que no hubo cobro y que puede pagar luego o en caja) y la **emisión de carnet** (necesita la firma digital; el analista ve
+el aviso y la repite).
+
+**Guion para demostrarlo**
+1. Arranque todo y compruebe `GET https://localhost:7102/api/v1/salud` → *Disponible*.
+2. **Detenga Core, Integración (API y servicio)**; deje la Caja y el Portal.
+3. Caja (`cajero`): abra caja y cobre un `DUP-CARNET` → e-CF *Contingencia*; la barra dice *Sin conexión*.
+4. Portal (ciudadano demo): envíe una solicitud → aviso "quedó guardada (envío N.º …)"; en *Mis trámites* aparece *Pendiente de envío*.
+5. Verifique en SQL que nada se perdió:
+   `SELECT * FROM CONADIS_CajaDB.caja.LineaFactura WHERE EstadoSincronizacion = 'Pendiente'` y
+   `SELECT * FROM CONADIS_WebDB.web.Envio WHERE Estado = 'Pendiente'`.
+6. **Suba Integración (API + servicio) y el Core.** En 1 a 2 minutos, sin tocar nada:
+   la Caja muestra *En línea* y el cobro pasa a *Aplicado*; el e-CF a *Aceptado*; el envío del portal a *Enviado*
+   y el trámite aparece en *Mis trámites* (y en el sistema interno del Core).
+7. Variante: deje Integración arriba y tumbe solo el Core: los cobros quedan en `integ.Mensaje` (Pendiente) y se aplican al subir el Core.
+
+## 9. Pruebas automáticas
 
 En cada solución: *Prueba → Ejecutar todas las pruebas*. Las clases cuyo nombre contiene `BaseDatos` necesitan que los scripts del paso 1 se hayan ejecutado. La cadena de conexión se puede cambiar con estas variables de entorno: `CONADIS_WEB_PRUEBAS`, `CONADIS_CAJA_PRUEBAS`, etc.
 
-## 9. Códigos de error de negocio (`THROW`)
+## 10. Códigos de error de negocio (`THROW`)
 
 | Módulo | Rango |
 |---|---|

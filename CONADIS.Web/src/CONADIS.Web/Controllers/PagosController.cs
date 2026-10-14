@@ -1,6 +1,7 @@
 using CONADIS.Web.Infraestructura;
 using CONADIS.Web.Models.ViewModels;
 using CONADIS.Web.Negocio.Datos;
+using CONADIS.Web.Negocio.Externos;
 using CONADIS.Web.Negocio.Modelos;
 using CONADIS.Web.Negocio.Reportes;
 using CONADIS.Web.Negocio.Servicios;
@@ -59,6 +60,13 @@ public class PagosController(ServicioPortal portal, ServicioReportesPortal repor
         catch (ReglaNegocioException ex)
         {
             TempData["Error"] = ex.Message;   // p. ej. "Fondos insuficientes."
+            return View(nameof(Retorno), Vista(orden, "Fallida"));
+        }
+        catch (SndNoDisponibleException)
+        {
+            // Un pago con tarjeta necesita la autorización del banco en ese momento: no se deja en cola.
+            TempData["Error"] = "El sistema de pagos no está disponible ahora. No se hizo ningún cobro. " +
+                                "Intenta más tarde o paga la orden en cualquier caja del CONADIS.";
             return View(nameof(Retorno), Vista(orden, "Fallida"));
         }
     }

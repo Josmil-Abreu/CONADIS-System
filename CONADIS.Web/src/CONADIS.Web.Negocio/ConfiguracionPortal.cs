@@ -29,6 +29,7 @@ public static class ConfiguracionPortal
         servicios.AddScoped<ServicioPortal>();
         servicios.AddScoped<ServicioBorradores>();
         servicios.AddScoped<ServicioReportesPortal>();
+        servicios.AddScoped<BandejaSalida>();
         return servicios;
     }
 }

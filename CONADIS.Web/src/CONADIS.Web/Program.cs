@@ -14,6 +14,9 @@ builder.Logging.ClearProviders().AddProvider(new ProveedorLog4Net());
 // Cuentas y borradores en CONADIS_WebDB; trámites, carnet y pagos a través de Integración (nunca directo al Core).
 builder.Services.AgregarLogicaPortal(builder.Configuration);
 
+// Bandeja de salida: reenvía cada 30 s lo que el ciudadano hizo mientras Integración o el Core estaban caídos
+builder.Services.AddHostedService<TrabajadorBandejaSalida>();
+
 // ---------------------------------------------------------------- 3. MVC + manejo de errores de negocio / Integración caída
 builder.Services.AddControllersWithViews(o => o.Filters.Add<FiltroErroresPortal>());
 

@@ -1,4 +1,4 @@
-﻿@model MisTramitesVM
+@model MisTramitesVM
 @{
     ViewData["Title"] = "Mis trámites";
 }
@@ -19,6 +19,26 @@
             <h1 class="h2 mb-0">Mis trámites</h1>
             <a class="btn btn-primary" asp-controller="SolicitudCarnet" asp-action="Nueva">Nueva solicitud</a>
         </div>
+
+        @if (ViewBag.Pendientes is List<CONADIS.Web.Negocio.Servicios.EnvioPendiente> pendientes && pendientes.Count > 0)
+        {
+            <section class="tarjeta mb-4" aria-labelledby="tituloPendientes">
+                <h2 id="tituloPendientes" class="h5">Operaciones guardadas sin conexión</h2>
+                <p class="small text-muted">Se envían solas en cuanto el sistema central esté disponible. No tienes que hacer nada.</p>
+                <ul class="list-unstyled mb-0">
+                    @foreach (var p in pendientes)
+                    {
+                        <li class="mb-1">
+                            <span class="badge @(p.Estado == "Enviado" ? "bg-success" : p.Estado == "Rechazado" ? "bg-danger" : "bg-warning text-dark")">
+                                @(p.Estado == "Enviado" ? "Enviado" : p.Estado == "Rechazado" ? "No aceptado" : "Pendiente de envío")
+                            </span>
+                            @p.Descripcion · guardado el @p.FechaCreacion.LocalDateTime.ToString("dd/MM/yyyy HH:mm")
+                            @if (p.Estado == "Rechazado") { <span class="text-danger small">· @p.UltimoError</span> }
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
 
         <div class="row g-3 mb-4">
             <div class="col-md-4"><div class="tarjeta h-100">

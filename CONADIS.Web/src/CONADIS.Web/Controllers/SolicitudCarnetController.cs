@@ -15,7 +15,7 @@ namespace CONADIS.Web.Controllers;
 /// Patrón por paso: GET muestra la pantalla, POST valida, guarda el borrador y redirige al siguiente.
 /// </summary>
 [Authorize]
-public class SolicitudCarnetController(ServicioPortal portal, ServicioBorradores borradores, ServicioReportesPortal reportes,
+public class SolicitudCarnetController(ServicioPortal portal, ServicioBorradores borradores, ServicioReportesPortal reportes, BandejaSalida bandeja,
     ILogger<SolicitudCarnetController> logger)
     : ControladorPortal
 {
@@ -367,8 +367,19 @@ public class SolicitudCarnetController(ServicioPortal portal, ServicioBorradores
         try
         {
             // La clave de idempotencia es la del borrador: pulsar "Enviar" dos veces no crea dos solicitudes.
-            resultado = await portal.EnviarSolicitudAsync(Cuenta, solicitud,
-                ClaveIdempotencia("solicitud", $"{id.Cedula}-{borrador.UltimoGuardado:yyyyMMddHHmmss}"), Ip, ct);
+            var clave = ClaveIdempotencia("solicitud", $"{id.Cedula}-{borrador.UltimoGuardado:yyyyMMddHHmmss}");
+            var envio = await bandeja.EnviarOEncolarAsync(Cuenta, portal.PeticionSolicitud(Cuenta, solicitud, clave),
+                () => portal.EnviarSolicitudAsync(Cuenta, solicitud, clave, Ip, ct), Ip, ct);
+            if (envio.EnCola)
+            {
+                // Sin conexión: la solicitud quedó guardada y se enviará sola. No se pierde lo escrito.
+                HttpContext.Session.Remove(ClaveBorrador);
+                await borradores.EliminarAsync(Cuenta.CuentaId, TiposBorrador.Certificacion, ct);
+                TempData["Aviso"] = $"El sistema central no está disponible ahora. Tu solicitud quedó guardada (envío N.º {envio.EnvioId}) " +
+                                    "y se enviará automáticamente en cuanto vuelva. Verás el número de trámite en Mi actividad.";
+                return RedirectToAction("Index", "Tramites");
+            }
+            resultado = envio.Valor!;
         }
         catch (ReglaNegocioException ex)
         {

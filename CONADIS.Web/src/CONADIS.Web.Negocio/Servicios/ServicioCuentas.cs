@@ -32,8 +32,19 @@ public sealed class ServicioCuentas(EjecutorSp db, ClienteSnd snd)
         if (!d.AceptaTerminos) throw new ReglaNegocioException(0, "Debe aceptar los términos de uso y la política de privacidad.");
 
         // Identidad con la JCE (a través de Integración). Si la JCE no responde, la cuenta queda "Pendiente".
-        var identidad = await snd.GetAsync<IdentidadJce>($"api/v1/portal/identidad/{cedula}", new ContextoPortal(cedula, ip), ct)
-                        ?? throw new SndNoDisponibleException("No se pudo validar la identidad.");
+        // Sin conexión con Integración la cuenta se crea igual ("Pendiente") y la validación queda en la bandeja de salida.
+        IdentidadJce identidad;
+        var sinConexion = false;
+        try
+        {
+            identidad = await snd.GetAsync<IdentidadJce>($"api/v1/portal/identidad/{cedula}", new ContextoPortal(cedula, ip), ct)
+                        ?? new IdentidadJce("Pendiente", null, null, "Sin respuesta");
+        }
+        catch (SndNoDisponibleException)
+        {
+            identidad = new IdentidadJce("Pendiente", null, null, "Sin conexión");
+            sinConexion = true;
+        }
         if (identidad.Estado == "Invalida")
             throw new ReglaNegocioException(0, $"La Junta Central Electoral no valida esta cédula: {identidad.Motivo}");
 
@@ -50,8 +61,13 @@ public sealed class ServicioCuentas(EjecutorSp db, ClienteSnd snd)
             Parametro.TextoAnsi("@Ip", ip, 45)
         ], ct);
 
-        Log.Info($"Cuenta del portal creada (identidad {estado}).");
-        return new ResultadoRegistro(tabla.Rows[0].Entero("CuentaId"), nombre, estado, token);
+        var cuentaId = tabla.Rows[0].Entero("CuentaId");
+        if (estado == "Pendiente")
+            await new BandejaSalida(db, snd).EncolarAsync(cuentaId, new PeticionPortal("ValidarIdentidad", "GET",
+                $"api/v1/portal/identidad/{cedula}", new { }, $"identidad-{cuentaId}", "Validación de identidad con la JCE"), ip, ct);
+
+        Log.Info($"Cuenta del portal creada (identidad {estado}{(sinConexion ? ", sin conexión: se validará después" : "")}).");
+        return new ResultadoRegistro(cuentaId, nombre, estado, token);
     }
 
     public async Task<ResultadoLoginCiudadano> IniciarSesionAsync(string? usuario, string? contrasena, string? ip, CancellationToken ct = default)

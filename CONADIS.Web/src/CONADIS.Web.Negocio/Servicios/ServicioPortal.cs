@@ -11,6 +11,12 @@ namespace CONADIS.Web.Negocio.Servicios;
 /// La cédula siempre es la de la sesión del ciudadano (CuentaSesion), nunca un dato que él escriba,
 /// así nadie puede consultar trámites ajenos cambiando la URL.
 /// </summary>
+/// <summary>
+/// Operación del ciudadano lista para enviarse a Integración. Si no hay conexión se guarda tal cual en la
+/// bandeja de salida (web.Envio) y se reenvía después con la misma clave de idempotencia.
+/// </summary>
+public sealed record PeticionPortal(string Tipo, string Metodo, string Ruta, object Cuerpo, string Clave, string Descripcion);
+
 public sealed class ServicioPortal(ClienteSnd snd)
 {
     private const string Base = "api/v1/portal";
@@ -70,19 +76,28 @@ public sealed class ServicioPortal(ClienteSnd snd)
         => await snd.GetAsync<List<AvisoPortal>>($"{Base}/ciudadanos/{c.Cedula}/avisos?maximo={maximo}", Ctx(c, null), ct) ?? [];
 
     public Task ReprogramarCitaAsync(CuentaSesion c, string numero, DateTimeOffset nuevaFecha, string? ip = null, CancellationToken ct = default)
+        => EnviarAsync(PeticionCita(c, numero, nuevaFecha), c, ip, ct);
+
+    public PeticionPortal PeticionCita(CuentaSesion c, string numero, DateTimeOffset nuevaFecha)
     {
         if (nuevaFecha <= DateTimeOffset.Now) throw new ReglaNegocioException(0, "Elija una fecha futura.");
-        return snd.EnviarSinRespuestaAsync(HttpMethod.Put, $"{Base}/ciudadanos/{c.Cedula}/tramites/{Uri.EscapeDataString(numero)}/cita",
-            new { nuevaFecha }, Ctx(c, ip), ct: ct);
+        return new PeticionPortal("Cita", "PUT", $"{Base}/ciudadanos/{c.Cedula}/tramites/{Uri.EscapeDataString(numero)}/cita",
+            new { nuevaFecha }, $"cita-{c.CuentaId}-{numero}-{nuevaFecha:yyyyMMddHHmm}", $"Cambio de cita del trámite {numero} al {nuevaFecha:dd/MM/yyyy HH:mm}");
     }
 
     public Task ApelarAsync(CuentaSesion c, string numero, string motivo, string? ip = null, CancellationToken ct = default)
+        => EnviarAsync(PeticionApelacion(c, numero, motivo), c, ip, ct);
+
+    public PeticionPortal PeticionApelacion(CuentaSesion c, string numero, string motivo)
     {
         if (string.IsNullOrWhiteSpace(motivo) || motivo.Trim().Length < 20)
             throw new ReglaNegocioException(0, "Explique el motivo de su apelación (mínimo 20 caracteres).");
-        return snd.EnviarSinRespuestaAsync(HttpMethod.Post, $"{Base}/ciudadanos/{c.Cedula}/tramites/{Uri.EscapeDataString(numero)}/apelacion",
-            new { motivo = motivo.Trim() }, Ctx(c, ip), $"apelacion-{c.CuentaId}-{numero}", ct);
+        return new PeticionPortal("Apelacion", "POST", $"{Base}/ciudadanos/{c.Cedula}/tramites/{Uri.EscapeDataString(numero)}/apelacion",
+            new { motivo = motivo.Trim() }, $"apelacion-{c.CuentaId}-{numero}", $"Apelación del trámite {numero}");
     }
+
+    private Task EnviarAsync(PeticionPortal p, CuentaSesion c, string? ip, CancellationToken ct)
+        => snd.EnviarSinRespuestaAsync(new HttpMethod(p.Metodo), p.Ruta, p.Cuerpo, Ctx(c, ip), p.Clave, ct);
 
     // ------------------------------------------------------------------ solicitudes (RF-WEB-01 y RF-WEB-03)
 
@@ -94,23 +109,36 @@ public sealed class ServicioPortal(ClienteSnd snd)
     public Task<SolicitudRegistrada> EnviarSolicitudAsync(CuentaSesion c, SolicitudPortal s, string claveIdempotencia, string? ip = null,
         CancellationToken ct = default)
     {
+        var p = PeticionSolicitud(c, s, claveIdempotencia);
+        return snd.PostAsync<SolicitudRegistrada>(p.Ruta, p.Cuerpo, Ctx(c, ip), p.Clave, ct);
+    }
+
+    /// <summary>Valida la solicitud y arma la petición (la misma se usa para enviarla ya o dejarla en la bandeja de salida).</summary>
+    public PeticionPortal PeticionSolicitud(CuentaSesion c, SolicitudPortal s, string claveIdempotencia)
+    {
         ValidarSolicitud(s);
         var cuerpo = JsonSerializer.SerializeToNode(s, ClienteSnd.Json)!.AsObject();
         cuerpo["canal"] = "Web";
         cuerpo["cedulaCuenta"] = c.Cedula;
         cuerpo["estadoIdentidad"] = "Pendiente";   // lo decide Integración con la JCE
         if (s.Cedula is not null) cuerpo["cedula"] = ValidadorCedula.Normalizar(s.Cedula);
-        return snd.PostAsync<SolicitudRegistrada>($"{Base}/solicitudes", cuerpo, Ctx(c, ip), claveIdempotencia, ct);
+        return new PeticionPortal("Solicitud", "POST", $"{Base}/solicitudes", cuerpo, claveIdempotencia, $"Solicitud de {s.Tipo.ToLowerInvariant()}");
     }
 
     public Task<ServicioRegistrado> EnviarServicioAsync(CuentaSesion c, SolicitudServicioPortal s, string claveIdempotencia, string? ip = null,
         CancellationToken ct = default)
     {
+        var p = PeticionServicio(s, claveIdempotencia);
+        return snd.PostAsync<ServicioRegistrado>(p.Ruta, p.Cuerpo, Ctx(c, ip), p.Clave, ct);
+    }
+
+    public PeticionPortal PeticionServicio(SolicitudServicioPortal s, string claveIdempotencia)
+    {
         if (s.Tipo is not ("AYUDA_TECNICA" or "CERT_ACCESIBILIDAD")) throw new ReglaNegocioException(0, "Tipo de solicitud no válido.");
         if (!ValidacionesPortal.CorreoValido(s.Correo)) throw new ReglaNegocioException(0, "El correo electrónico no es válido.");
         if (string.IsNullOrWhiteSpace(s.Resumen) || string.IsNullOrWhiteSpace(s.Detalle))
             throw new ReglaNegocioException(0, "Complete el resumen y el detalle de la solicitud.");
-        return snd.PostAsync<ServicioRegistrado>($"{Base}/servicios", s, Ctx(c, ip), claveIdempotencia, ct);
+        return new PeticionPortal("Servicio", "POST", $"{Base}/servicios", s, claveIdempotencia, s.Resumen);
     }
 
     // ------------------------------------------------------------------ pagos en línea

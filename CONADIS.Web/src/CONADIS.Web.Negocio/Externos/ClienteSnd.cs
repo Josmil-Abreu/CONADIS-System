@@ -43,6 +43,19 @@ public sealed class ClienteSnd(HttpClient http)
         if (estado == HttpStatusCode.NotFound) throw new ReglaNegocioException(0, "No se encontró el trámite.");
     }
 
+    /// <summary>
+    /// Reenvío desde la bandeja de salida: cuerpo JSON ya guardado. Devuelve la respuesta de Integración.
+    /// Lanza SndNoDisponibleException (reintentar) o ReglaNegocioException (rechazo definitivo, incluido 404).
+    /// </summary>
+    public async Task<string> ReenviarAsync(string metodo, string ruta, string? json, ContextoPortal contexto, string? claveIdempotencia,
+        CancellationToken ct = default)
+    {
+        var cuerpo = string.IsNullOrWhiteSpace(json) || metodo == "GET" ? null : System.Text.Json.Nodes.JsonNode.Parse(json);
+        var (estado, respuesta) = await EnviarAsync(new HttpMethod(metodo), ruta, cuerpo, contexto, claveIdempotencia, ct);
+        if (estado == HttpStatusCode.NotFound) throw new ReglaNegocioException(404, "El trámite o el recurso ya no existe.");
+        return respuesta;
+    }
+
     private async Task<(HttpStatusCode Estado, string Cuerpo)> EnviarAsync(HttpMethod metodo, string ruta, object? cuerpo,
         ContextoPortal contexto, string? claveIdempotencia, CancellationToken ct)
     {
