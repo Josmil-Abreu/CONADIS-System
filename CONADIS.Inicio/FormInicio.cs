@@ -11,6 +11,7 @@ public sealed class FormInicio : Form
     private readonly TextBox _usuario = new() { Width = 300, Font = new Font("Segoe UI", 11F) };
     private readonly TextBox _contrasena = new() { Width = 300, Font = new Font("Segoe UI", 11F), UseSystemPasswordChar = true };
     private readonly Button _entrar = new() { Text = "Entrar", Width = 300, Height = 40, Font = new Font("Segoe UI", 11F, FontStyle.Bold) };
+    private readonly LinkLabel _crearCuenta = new() { Text = "¿Es ciudadano y no tiene cuenta? Créela aquí", AutoSize = true, Font = new Font("Segoe UI", 10F) };
     private readonly Label _mensaje = new() { AutoSize = true, MaximumSize = new Size(300, 0), Font = new Font("Segoe UI", 10F) };
 
     public FormInicio(LoginUnico login)
@@ -38,11 +39,26 @@ public sealed class FormInicio : Form
         panel.Controls.Add(_contrasena);
         _entrar.Margin = new Padding(0, 16, 0, 8);
         panel.Controls.Add(_entrar);
+        panel.Controls.Add(_crearCuenta);
         panel.Controls.Add(_mensaje);
         Controls.Add(panel);
 
         AcceptButton = _entrar;
         _entrar.Click += async (_, _) => await EntrarAsync();
+        _crearCuenta.LinkClicked += (_, _) =>
+        {
+            try
+            {
+                _login.AbrirRegistro();
+                _mensaje.ForeColor = Color.DarkGreen;
+                _mensaje.Text = "Abriendo el registro del Portal en el navegador. Después de crear la cuenta puede entrar aquí con su cédula.";
+            }
+            catch (Exception ex)
+            {
+                _mensaje.ForeColor = Color.Firebrick;
+                _mensaje.Text = ex.Message;
+            }
+        };
     }
 
     private async Task EntrarAsync()

@@ -125,6 +125,9 @@ public sealed class LoginUnico(IConfiguration config, ILoggerFactory logs)
         _log.LogInformation("Login único: {Nombre} ({Rol}) → {Modulo}", a.Nombre, a.Rol, a.Modulo);
     }
 
+    /// <summary>Abre el registro de cuentas del Portal (ciudadanos que todavía no tienen usuario).</summary>
+    public void AbrirRegistro() => AbrirNavegador($"{Url("Inicio:UrlPortal", "https://localhost:7122/")}Cuenta/Registro");
+
     private string Url(string clave, string predeterminada)
     {
         var u = config[clave] ?? predeterminada;
