@@ -118,6 +118,13 @@ public sealed class ServicioSesiones(EjecutorSp db, ILogger<ServicioSesiones> lo
             f.Decimal("DiferenciaEfectivo"), f.Decimal("DiferenciaTarjeta"), f.Decimal("DiferenciaTransferencia"));
     }
 
+    /// <summary>Arqueo ya registrado (null si la sesión todavía no se arqueó).</summary>
+    public Task<ResultadoArqueo?> ObtenerArqueoAsync(int sesionId, CancellationToken ct = default)
+        => db.ConsultarUnoAsync("caja.ppArqueo_Obtener", f => new ResultadoArqueo(f.Decimal("EfectivoDeclarado"), f.Decimal("TarjetaDeclarado"),
+                f.Decimal("TransferenciaDeclarado"), f.Decimal("EfectivoEsperado"), f.Decimal("TarjetaEsperado"), f.Decimal("TransferenciaEsperado"),
+                f.Decimal("DiferenciaEfectivo"), f.Decimal("DiferenciaTarjeta"), f.Decimal("DiferenciaTransferencia")),
+            [Parametro.Entero("@SesionId", sesionId)], ct);
+
     public async Task<ResultadoCierre> CerrarAsync(int sesionId, UsuarioCaja supervisor, string? justificacion, string? observaciones,
         CancellationToken ct = default)
     {

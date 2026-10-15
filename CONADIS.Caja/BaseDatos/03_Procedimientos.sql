@@ -528,6 +528,20 @@ BEGIN
 END;
 GO
 
+-- Arqueo ya registrado de una sesión (para retomar el cierre si se cerró la ventana después de contar).
+CREATE OR ALTER PROCEDURE caja.ppArqueo_Obtener
+    @SesionId INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT EfectivoDeclarado, TarjetaDeclarado, TransferenciaDeclarado, EfectivoEsperado, TarjetaEsperado, TransferenciaEsperado,
+           EfectivoDeclarado - EfectivoEsperado AS DiferenciaEfectivo,
+           TarjetaDeclarado - TarjetaEsperado AS DiferenciaTarjeta,
+           TransferenciaDeclarado - TransferenciaEsperado AS DiferenciaTransferencia
+    FROM caja.Arqueo WHERE SesionId = @SesionId;
+END;
+GO
+
 -- Cierre aprobado por un supervisor. Diferencias por encima de la tolerancia exigen justificación.
 CREATE OR ALTER PROCEDURE caja.ppSesion_Cerrar
     @SesionId       INT,

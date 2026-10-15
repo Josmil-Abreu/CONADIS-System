@@ -83,6 +83,15 @@ public sealed class FormArqueoCierre : Form
 
         _arquear.Click += async (_, _) => await Ui.EjecutarAsync(_arquear, ArquearAsync);
         _cerrar.Click += async (_, _) => await Ui.EjecutarAsync(_cerrar, CerrarAsync);
+        // Si la caja ya se contó (se cerró esta ventana o la app antes de aprobar el cierre), se retoma en el paso 2.
+        Load += async (_, _) => await Ui.EjecutarAsync(_cerrar, RetomarArqueoAsync);
+    }
+
+    private async Task RetomarArqueoAsync()
+    {
+        if (_contexto.Sesion is not { Estado: EstadosSesion.EnArqueo } sesion) return;
+        var arqueo = await _sesiones.ObtenerArqueoAsync(sesion.SesionId);
+        if (arqueo is not null) MostrarArqueo(arqueo);
     }
 
     private decimal EfectivoContado() => _conteo.Sum(p => p.Key * p.Value.Value);
@@ -95,8 +104,15 @@ public sealed class FormArqueoCierre : Form
         if (MessageBox.Show(this, "Una vez registrado el arqueo no se puede volver a contar. ¿Continuar?", Text,
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
 
-        _arqueo = await _sesiones.ArquearAsync(sesion.SesionId, _contexto.UsuarioActual, EfectivoContado(), _tarjeta.Value, _transferencia.Value);
-        var a = _arqueo;
+        MostrarArqueo(await _sesiones.ArquearAsync(sesion.SesionId, _contexto.UsuarioActual, EfectivoContado(), _tarjeta.Value, _transferencia.Value));
+        _contexto.EstablecerSesion(await _sesiones.ObtenerAbiertaAsync(_contexto.UsuarioActual.UsuarioId) ?? sesion);
+        (_arqueo!.HayDiferencias ? _justificacion : _supervisor).Focus();
+    }
+
+    /// <summary>Paso 2: muestra lo declarado contra lo esperado y habilita el cierre.</summary>
+    private void MostrarArqueo(ResultadoArqueo a)
+    {
+        _arqueo = a;
         _resultado.Text =
             $"Efectivo:       declarado RD${a.EfectivoDeclarado:N2} · esperado RD${a.EfectivoEsperado:N2} · diferencia RD${a.DiferenciaEfectivo:N2}\n" +
             $"Tarjeta:        declarado RD${a.TarjetaDeclarado:N2} · esperado RD${a.TarjetaEsperado:N2} · diferencia RD${a.DiferenciaTarjeta:N2}\n" +
@@ -106,8 +122,6 @@ public sealed class FormArqueoCierre : Form
         foreach (var n in _conteo.Values) n.Enabled = false;
         _tarjeta.Enabled = _transferencia.Enabled = _arquear.Visible = false;
         _panelCierre.Visible = true;
-        _contexto.EstablecerSesion(await _sesiones.ObtenerAbiertaAsync(_contexto.UsuarioActual.UsuarioId) ?? sesion);
-        (_arqueo.HayDiferencias ? _justificacion : _supervisor).Focus();
     }
 
     private async Task CerrarAsync()
